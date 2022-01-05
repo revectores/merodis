@@ -9,10 +9,9 @@ Merodis::Merodis() noexcept :
 
 Merodis::~Merodis() noexcept = default;
 
-Status Merodis::Open(const std::string& db_path) noexcept {
+Status Merodis::Open(const Options& options, const std::string& db_path) noexcept {
   string_db_ = new RedisString;
-  string_db_->Open(db_path);
-  return {};
+  return string_db_->Open(options, db_path);
 }
 
 Status Merodis::Get(const Slice& key, std::string* value) noexcept {

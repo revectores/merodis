@@ -8,7 +8,9 @@ class StringTest : public testing::Test {
 public:
   StringTest() {
     std::string path = "/tmp/test";
-    s = db.Open(path);
+    merodis::Options options;
+    options.create_if_missing = true;
+    s = db.Open(options, path);
   }
 
   merodis::Merodis db;

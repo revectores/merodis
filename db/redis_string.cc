@@ -10,10 +10,8 @@ RedisString::RedisString() noexcept = default;
 
 RedisString::~RedisString() noexcept = default;
 
-Status RedisString::Open(const std::string& db_path) noexcept {
-  leveldb::Options op;
-  op.create_if_missing = true;
-  return leveldb::DB::Open(op, db_path, &db_);
+Status RedisString::Open(const Options& options, const std::string& db_path) noexcept {
+  return leveldb::DB::Open(options, db_path, &db_);
 }
 
 Status RedisString::Get(const Slice& key, std::string* value) noexcept {

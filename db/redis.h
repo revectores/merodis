@@ -13,7 +13,7 @@ public:
   Redis() noexcept;
   virtual ~Redis() noexcept;
 
-  virtual Status Open(const std::string& db_path) noexcept = 0;
+  virtual Status Open(const Options& options, const std::string& db_path) noexcept = 0;
 
 protected:
   leveldb::DB* db_;

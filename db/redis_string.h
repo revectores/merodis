@@ -11,7 +11,7 @@ public:
   RedisString() noexcept;
   ~RedisString() noexcept final;
 
-  Status Open(const std::string& db_path) noexcept final;
+  Status Open(const Options& options, const std::string& db_path) noexcept final;
   Status Get(const Slice& key, std::string* value) noexcept;
   Status Set(const Slice& key, const Slice& value) noexcept;
 };
