@@ -3,8 +3,35 @@ project(merodis)
 
 set(CMAKE_CXX_STANDARD 11)
 
+SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Build LevelDB's unit tests" FORCE)
+option(MERODIS_BUILD_TESTS "Build Merodis' unit tests" ON)
+
 add_subdirectory(third_party/leveldb)
-include_directories(third_party/leveldb/include)
+
+include_directories(
+  third_party/leveldb/include
+  include
+)
 link_directories(third_party/leveldb)
-add_executable(merodis db/main.cc)
+
+add_library(merodis)
+target_sources(merodis PRIVATE
+  db/redis.cc
+  db/redis.h
+  db/merodis.cc
+  include/merodis/merodis.h
+  db/redis_string.cc
+  db/redis_string.h
+)
 target_link_libraries(merodis leveldb)
+
+
+if(MERODIS_BUILD_TESTS)
+  add_subdirectory(third_party/googletest)
+  add_executable(test_merodis)
+  target_sources(test_merodis PRIVATE
+    tests/string_test.cc
+  )
+  target_link_directories(test_merodis PRIVATE third_party/googletest)
+  target_link_libraries(test_merodis merodis gtest)
+endif(MERODIS_BUILD_TESTS)
