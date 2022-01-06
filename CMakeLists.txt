@@ -4,7 +4,9 @@ project(merodis)
 set(CMAKE_CXX_STANDARD 11)
 
 SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Build LevelDB's unit tests" FORCE)
+SET(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "Build LevelDB's benchmarks" FORCE)
 option(MERODIS_BUILD_TESTS "Build Merodis' unit tests" ON)
+option(MERODIS_BUILD_BENCHMARKS "Build Merodis' benchmarks" ON)
 
 add_subdirectory(third_party/leveldb)
 
@@ -43,3 +45,13 @@ if(MERODIS_BUILD_TESTS)
   target_link_directories(test_merodis PRIVATE third_party/googletest)
   target_link_libraries(test_merodis merodis gtest)
 endif(MERODIS_BUILD_TESTS)
+
+if(MERODIS_BUILD_BENCHMARKS)
+  add_subdirectory(third_party/benchmark)
+  add_executable(merodis_benchmark)
+  target_sources(merodis_benchmark PRIVATE
+    benchmark/bench.cc
+  )
+  target_link_directories(merodis_benchmark PRIVATE third_party/benchmark)
+  target_link_libraries(merodis_benchmark merodis benchmark)
+endif(MERODIS_BUILD_BENCHMARKS)
