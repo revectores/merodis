@@ -1,21 +1,11 @@
-#include <iostream>
+#include <cstdio>
 
 #include "gtest/gtest.h"
 #include "merodis/merodis.h"
+#include "common.h"
 
 
-class StringTest : public testing::Test {
-public:
-  StringTest() {
-    std::string path = "/tmp/test";
-    merodis::Options options;
-    options.create_if_missing = true;
-    s = db.Open(options, path);
-  }
-
-  merodis::Merodis db;
-  merodis::Status s;
-};
+class StringTest : public RedisTest {};
 
 TEST_F(StringTest, StringRW) {
   s = db.Set("key", "value");
@@ -24,9 +14,4 @@ TEST_F(StringTest, StringRW) {
   s = db.Get("key", &value);
   ASSERT_EQ(s.ok(), true);
   EXPECT_EQ(value, "value");
-}
-
-int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

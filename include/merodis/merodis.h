@@ -5,10 +5,13 @@
 
 namespace merodis {
 using Options = leveldb::Options;
+using ReadOptions = leveldb::ReadOptions;
+using WriteOptions = leveldb::WriteOptions;
 using Status = leveldb::Status;
 using Slice = leveldb::Slice;
 
 class RedisString;
+class RedisList;
 
 class Merodis {
 public:
@@ -16,10 +19,20 @@ public:
   ~Merodis() noexcept;
 
   Status Open(const Options& options, const std::string& db_path) noexcept;
+  static Status DestroyDB(const std::string& db_path, Options options) noexcept;
+
+  // String Operators
   Status Get(const Slice& key, std::string* value) noexcept;
   Status Set(const Slice& key, const Slice& value) noexcept;
+
+  // List Operators
+  Status LLen(const Slice& key, uint64_t* len) noexcept;
+  Status LIndex(const Slice& key, uint64_t index, std::string* value) noexcept;
+  Status LPush(const Slice& key, const Slice& value) noexcept;
+
 private:
   RedisString* string_db_;
+  RedisList* list_db_;
 };
 
 }

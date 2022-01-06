@@ -6,6 +6,8 @@ namespace merodis {
 Redis::Redis() noexcept :
   db_(nullptr) {}
 
-Redis::~Redis() noexcept = default;
+Redis::~Redis() noexcept {
+  delete db_;
+};
 
 }
