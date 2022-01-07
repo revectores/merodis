@@ -2,11 +2,9 @@
 #define MERODIS_REDIS_H
 
 #include "leveldb/db.h"
+#include "merodis/merodis.h"
 
 namespace merodis {
-using Options = leveldb::Options;
-using Status = leveldb::Status;
-using Slice = leveldb::Slice;
 
 class Redis {
 public:

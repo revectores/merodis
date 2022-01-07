@@ -59,7 +59,7 @@ Status RedisList::Open(const Options& options, const std::string& db_path) noexc
 
 Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
   std::string rawListMetaValue;
-  merodis::Status s = db_->Get(leveldb::ReadOptions(), key, &rawListMetaValue);
+  merodis::Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
@@ -75,12 +75,12 @@ Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
 
 Status RedisList::LIndex(const Slice &key, uint64_t index, std::string* value) noexcept {
   std::string rawListMetaValue;
-  Status s = db_->Get(leveldb::ReadOptions(), key, &rawListMetaValue);
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
     ListNodeKey nodeKey(key, metaValue.leftIndex + index);
-    s = db_->Get(leveldb::ReadOptions(), nodeKey.Encode(), value);
+    s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
     return s;
   }
   return s;
@@ -88,22 +88,22 @@ Status RedisList::LIndex(const Slice &key, uint64_t index, std::string* value) n
 
 Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
   std::string rawListMetaValue;
-  Status s = db_->Get(leveldb::ReadOptions(), key, &rawListMetaValue);
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
     metaValue.leftIndex--;
     metaValue.count++;
-    s = db_->Put(leveldb::WriteOptions(), key, metaValue.Encode());
+    s = db_->Put(WriteOptions(), key, metaValue.Encode());
     if (!s.ok()) return s;
     ListNodeKey nodeKey(key, metaValue.leftIndex);
-    return db_->Put(leveldb::WriteOptions(), nodeKey.Encode(), value);
+    return db_->Put(WriteOptions(), nodeKey.Encode(), value);
   } else if (s.IsNotFound()) {
     ListMetaValue metaValue;
-    s = db_->Put(leveldb::WriteOptions(), key, metaValue.Encode());
+    s = db_->Put(WriteOptions(), key, metaValue.Encode());
     std::string v;
     if (!s.ok()) return s;
     ListNodeKey nodeKey(key, metaValue.leftIndex);
-    return db_->Put(leveldb::WriteOptions(), nodeKey.Encode(), value);
+    return db_->Put(WriteOptions(), nodeKey.Encode(), value);
   }
   return s;
 }

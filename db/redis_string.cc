@@ -15,11 +15,11 @@ Status RedisString::Open(const Options& options, const std::string& db_path) noe
 }
 
 Status RedisString::Get(const Slice& key, std::string* value) noexcept {
-  return db_->Get(leveldb::ReadOptions(), key, value);
+  return db_->Get(ReadOptions(), key, value);
 }
 
 Status RedisString::Set(const Slice& key, const Slice& value) noexcept {
-  return db_->Put(leveldb::WriteOptions(), key, value);
+  return db_->Put(WriteOptions(), key, value);
 }
 
 }
