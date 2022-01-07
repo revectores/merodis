@@ -12,7 +12,7 @@ struct ListMetaValue {
   constexpr static uint64_t InitIndex = 9223372036854775807ull;
 
   explicit ListMetaValue() noexcept;
-  explicit ListMetaValue(int64_t leftIndex, int64_t rightIndex) noexcept;
+  explicit ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept;
   explicit ListMetaValue(const std::string& rawValue) noexcept;
   ~ListMetaValue() noexcept = default;
 
@@ -43,7 +43,7 @@ public:
 
   Status Open(const Options& options, const std::string& db_path) noexcept final;
   Status LLen(const Slice& key, uint64_t* len) noexcept;
-  Status LIndex(const Slice& key, uint64_t index, std::string* value) noexcept;
+  Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
 };
 

@@ -28,5 +28,9 @@ TEST_F(ListTest, LPush) {
   ASSERT_EQ(value, "1");
   ASSERT_MERODIS_OK(db.LIndex("key", 1, &value));
   ASSERT_EQ(value, "0");
+  ASSERT_MERODIS_OK(db.LIndex("key", -1, &value));
+  ASSERT_EQ(value, "0");
+  ASSERT_MERODIS_OK(db.LIndex("key", -2, &value));
+  ASSERT_EQ(value, "1");
   ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", 2, &value));
 }

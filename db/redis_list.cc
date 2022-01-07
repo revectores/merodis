@@ -14,7 +14,7 @@ ListMetaValue::ListMetaValue() noexcept :
   leftIndex(InitIndex),
   rightIndex(InitIndex) {}
 
-ListMetaValue::ListMetaValue(int64_t leftIndex, int64_t rightIndex) noexcept :
+ListMetaValue::ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept :
   leftIndex(leftIndex),
   rightIndex(rightIndex) {}
 
@@ -69,13 +69,16 @@ Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
   }
 }
 
-Status RedisList::LIndex(const Slice &key, uint64_t index, std::string* value) noexcept {
+Status RedisList::LIndex(const Slice &key, int64_t index, std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
-    ListNodeKey nodeKey(key, metaValue.leftIndex + index);
+    ListNodeKey nodeKey(key, index >= 0 ?
+      metaValue.leftIndex + index :
+      metaValue.rightIndex + index + 1
+    );
     s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
     return s;
   }
