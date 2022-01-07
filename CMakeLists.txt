@@ -36,14 +36,15 @@ if(MERODIS_BUILD_TESTS)
   add_subdirectory(third_party/googletest)
   add_executable(test_merodis)
   target_sources(test_merodis PRIVATE
-    tests/test.cc
+    tests/testutil.h
     tests/common.h
+    tests/test.cc
     tests/coding_test.cc
     tests/string_test.cc
     tests/list_test.cc
   )
   target_link_directories(test_merodis PRIVATE third_party/googletest)
-  target_link_libraries(test_merodis merodis gtest)
+  target_link_libraries(test_merodis merodis gmock gtest)
 endif(MERODIS_BUILD_TESTS)
 
 if(MERODIS_BUILD_BENCHMARKS)
