@@ -11,26 +11,22 @@ namespace merodis {
 
 
 ListMetaValue::ListMetaValue() noexcept :
-  count(1),
   leftIndex(InitIndex),
   rightIndex(InitIndex) {}
 
-ListMetaValue::ListMetaValue(int64_t count, int64_t leftIndex, int64_t rightIndex) noexcept :
-  count(count),
+ListMetaValue::ListMetaValue(int64_t leftIndex, int64_t rightIndex) noexcept :
   leftIndex(leftIndex),
   rightIndex(rightIndex) {}
 
 ListMetaValue::ListMetaValue(const std::string& rawValue) noexcept {
-  count = DecodeFixed64(rawValue.data());
-  leftIndex = DecodeFixed64(rawValue.data() + sizeof(ListMetaValue::count));
-  rightIndex = DecodeFixed64(rawValue.data() + sizeof(ListMetaValue::count) + sizeof(ListMetaValue::leftIndex));
+  leftIndex = DecodeFixed64(rawValue.data());
+  rightIndex = DecodeFixed64(rawValue.data() + sizeof(leftIndex));
 }
 
 Slice ListMetaValue::Encode() const {
   char* rawMetaValue = new char[sizeof(ListMetaValue)];
-  EncodeFixed64(rawMetaValue, count);
-  EncodeFixed64(rawMetaValue + sizeof(count), leftIndex);
-  EncodeFixed64(rawMetaValue + sizeof(count) + sizeof(leftIndex), rightIndex);
+  EncodeFixed64(rawMetaValue, leftIndex);
+  EncodeFixed64(rawMetaValue + sizeof(leftIndex), rightIndex);
   return Slice{ rawMetaValue, sizeof(ListMetaValue)};
 }
 
@@ -39,8 +35,8 @@ ListNodeKey::ListNodeKey(Slice key, uint64_t index) noexcept :
   index(index) {}
 
 ListNodeKey::ListNodeKey(const std::string &rawValue) noexcept :
-  key(rawValue.data(), rawValue.length() - sizeof(ListNodeKey::index)) {
-  index = DecodeFixed64(rawValue.data() + rawValue.length() - sizeof(ListNodeKey::index));
+  key(rawValue.data(), rawValue.length() - sizeof(index)) {
+  index = DecodeFixed64(rawValue.data() + rawValue.length() - sizeof(index));
 }
 
 Slice ListNodeKey::Encode() const {
@@ -63,7 +59,7 @@ Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
 
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
-    *len = metaValue.count;
+    *len = metaValue.rightIndex - metaValue.leftIndex + 1;
     return merodis::Status::OK();
   } else if (s.IsNotFound()) {
     *len = 0;
@@ -92,7 +88,6 @@ Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
     metaValue.leftIndex--;
-    metaValue.count++;
     s = db_->Put(WriteOptions(), key, metaValue.Encode());
     if (!s.ok()) return s;
     ListNodeKey nodeKey(key, metaValue.leftIndex);
