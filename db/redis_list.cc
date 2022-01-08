@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 #include "leveldb/db.h"
 #include "util/coding.h"
@@ -75,12 +76,30 @@ Status RedisList::LIndex(const Slice &key, int64_t index, std::string* value) no
 
   if (s.ok()) {
     ListMetaValue metaValue(rawListMetaValue);
-    ListNodeKey nodeKey(key, index >= 0 ?
-      metaValue.leftIndex + index :
-      metaValue.rightIndex + index + 1
-    );
+    ListNodeKey nodeKey(key, GetInternalIndex(index, metaValue));
     s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
     return s;
+  }
+  return s;
+}
+
+Status RedisList::LRange(const Slice &key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (s.ok()) {
+    ListMetaValue metaValue(rawListMetaValue);
+    uint64_t from_ = std::max(metaValue.leftIndex, GetInternalIndex(from, metaValue));
+    uint64_t to_ = std::min(metaValue.rightIndex, GetInternalIndex(to, metaValue));
+    if (to_ < from_) return Status::OK();
+    values->reserve(to_ - from_ + 1);
+    uint64_t current_ = from_;
+    leveldb::Iterator* iter = db_->NewIterator(ReadOptions());
+    ListNodeKey firstKey(key, from_);
+    for (iter->Seek(firstKey.Encode()); iter->Valid() && current_ <= to_; iter->Next(), current_++) {
+      values->emplace_back(iter->value().ToString());
+    }
+    delete iter;
+    return Status::OK();
   }
   return s;
 }
@@ -104,6 +123,10 @@ Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
     return db_->Put(WriteOptions(), nodeKey.Encode(), value);
   }
   return s;
+}
+
+inline uint64_t RedisList::GetInternalIndex(int64_t userIndex, ListMetaValue metaValue) noexcept {
+  return userIndex >= 0 ? metaValue.leftIndex + userIndex : metaValue.rightIndex + userIndex + 1;
 }
 
 }

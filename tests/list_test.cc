@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "merodis/merodis.h"
@@ -33,4 +34,31 @@ TEST_F(ListTest, LPush) {
   ASSERT_MERODIS_OK(db.LIndex("key", -2, &value));
   ASSERT_EQ(value, "1");
   ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", 2, &value));
+}
+
+TEST_F(ListTest, LRange) {
+  ASSERT_MERODIS_OK(db.LPush("key", "2"));
+  ASSERT_MERODIS_OK(db.LPush("key", "1"));
+  ASSERT_MERODIS_OK(db.LPush("key", "0"));
+  std::vector<std::string> values;
+  ASSERT_MERODIS_OK(db.LRange("key", 0, 0, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0"}));
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", 0, 2, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0", "1", "2"}));
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", -3, 1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0", "1"}));
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", -3, -1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0", "1", "2"}));
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", -100, 100, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0", "1", "2"}));
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", 5, 10, &values));
+  ASSERT_EQ(values, std::vector<std::string>());
+  values.clear();
+  ASSERT_MERODIS_OK(db.LRange("key", -3, -6, &values));
+  ASSERT_EQ(values, std::vector<std::string>());
 }

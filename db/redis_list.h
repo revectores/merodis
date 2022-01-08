@@ -44,7 +44,11 @@ public:
   Status Open(const Options& options, const std::string& db_path) noexcept final;
   Status LLen(const Slice& key, uint64_t* len) noexcept;
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
+  Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
+
+private:
+  static inline uint64_t GetInternalIndex(int64_t userIndex, ListMetaValue meta) noexcept;
 };
 
 }
