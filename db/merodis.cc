@@ -1,6 +1,8 @@
 #include "merodis/merodis.h"
 
 #include <cstdio>
+#include <string>
+#include <vector>
 
 #include "redis_string.h"
 #include "redis_list.h"

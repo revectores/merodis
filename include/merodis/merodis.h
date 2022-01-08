@@ -1,6 +1,9 @@
 #ifndef MERODIS_MERODIS_H
 #define MERODIS_MERODIS_H
 
+#include <string>
+#include <vector>
+
 #include "leveldb/db.h"
 
 namespace merodis {

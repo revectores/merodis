@@ -1,9 +1,10 @@
 #include "redis_list.h"
 
-#include <string>
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <vector>
+#include <algorithm>
 
 #include "leveldb/db.h"
 #include "util/coding.h"
@@ -42,6 +43,7 @@ ListNodeKey::ListNodeKey(const std::string &rawValue) noexcept :
 
 Slice ListNodeKey::Encode() const {
   char* rawListNodeKey = new char[key.size() + sizeof(index)];
+  memcpy(rawListNodeKey, key.data(), key.size());
   EncodeFixed64(rawListNodeKey + key.size(), index);
   return Slice{rawListNodeKey, key.size() + sizeof(index)};
 }
