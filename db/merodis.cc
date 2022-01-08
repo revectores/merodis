@@ -28,7 +28,7 @@ Status Merodis::Open(const Options& options, const std::string& db_path) noexcep
   return s;
 }
 
-Status Merodis::DestroyDB(const std::string &db_path, Options options) noexcept {
+Status Merodis::DestroyDB(const std::string& db_path, Options options) noexcept {
   Status s = leveldb::DestroyDB(db_path + "/string", options);
   if (!s.ok()) return s;
   return leveldb::DestroyDB(db_path + "/list", options);
@@ -46,11 +46,11 @@ Status Merodis::LLen(const Slice& key, uint64_t* len) noexcept {
   return list_db_->LLen(key, len);
 }
 
-Status Merodis::LIndex(const Slice &key, int64_t index, std::string *value) noexcept {
+Status Merodis::LIndex(const Slice& key, int64_t index, std::string* value) noexcept {
   return list_db_->LIndex(key, index, value);
 }
 
-Status Merodis::LRange(const Slice &key, int64_t from, int64_t to, std::vector<std::string> *values) noexcept {
+Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string> *values) noexcept {
   return list_db_->LRange(key, from, to, values);
 }
 
@@ -58,11 +58,11 @@ Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {
   return list_db_->LPush(key, value);
 }
 
-Status Merodis::LPop(const Slice &key, std::string *value) noexcept {
+Status Merodis::LPop(const Slice& key, std::string* value) noexcept {
   return list_db_->LPop(key, value);
 }
 
-Status Merodis::LPop(const Slice &key, uint64_t count, std::vector<std::string> *values) noexcept {
+Status Merodis::LPop(const Slice& key, uint64_t count, std::vector<std::string> *values) noexcept {
   return list_db_->LPop(key, count, values);
 }
 

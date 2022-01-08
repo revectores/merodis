@@ -41,7 +41,7 @@ ListNodeKey::ListNodeKey(Slice key, uint64_t index) noexcept :
   key(key),
   index(index) {}
 
-ListNodeKey::ListNodeKey(const std::string &rawValue) noexcept :
+ListNodeKey::ListNodeKey(const std::string& rawValue) noexcept :
   key(rawValue.data(), rawValue.length() - sizeof(index)) {
   index = DecodeFixed64(rawValue.data() + rawValue.length() - sizeof(index));
 }
@@ -61,7 +61,7 @@ Status RedisList::Open(const Options& options, const std::string& db_path) noexc
   return leveldb::DB::Open(options, db_path, &db_);
 }
 
-Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
+Status RedisList::LLen(const Slice& key, uint64_t *len) noexcept {
   std::string rawListMetaValue;
   merodis::Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
@@ -77,7 +77,7 @@ Status RedisList::LLen(const Slice &key, uint64_t *len) noexcept {
   }
 }
 
-Status RedisList::LIndex(const Slice &key, int64_t index, std::string* value) noexcept {
+Status RedisList::LIndex(const Slice& key, int64_t index, std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
@@ -90,7 +90,7 @@ Status RedisList::LIndex(const Slice &key, int64_t index, std::string* value) no
   return s;
 }
 
-Status RedisList::LRange(const Slice &key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
+Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (s.ok()) {
@@ -111,7 +111,7 @@ Status RedisList::LRange(const Slice &key, int64_t from, int64_t to, std::vector
   return s;
 }
 
-Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
+Status RedisList::LPush(const Slice& key, const Slice& value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (s.ok()) {
@@ -132,7 +132,7 @@ Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
   return s;
 }
 
-Status RedisList::LPop(const Slice &key, std::string *value) noexcept {
+Status RedisList::LPop(const Slice& key, std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -147,7 +147,7 @@ Status RedisList::LPop(const Slice &key, std::string *value) noexcept {
   return s;
 }
 
-Status RedisList::LPop(const Slice &key, uint64_t count, std::vector<std::string> *values) noexcept {
+Status RedisList::LPop(const Slice& key, uint64_t count, std::vector<std::string> *values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (s.ok()) {
