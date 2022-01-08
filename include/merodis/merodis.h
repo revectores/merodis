@@ -10,6 +10,7 @@ namespace merodis {
 using Options = leveldb::Options;
 using ReadOptions = leveldb::ReadOptions;
 using WriteOptions = leveldb::WriteOptions;
+using WriteBatch = leveldb::WriteBatch;
 using Status = leveldb::Status;
 using Slice = leveldb::Slice;
 
@@ -33,6 +34,7 @@ public:
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
   Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
+  Status LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
 
 private:
   RedisString* string_db_;

@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "leveldb/db.h"
+#include "leveldb/write_batch.h"
 #include "util/coding.h"
 
 namespace merodis {
@@ -23,6 +24,10 @@ ListMetaValue::ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept :
 ListMetaValue::ListMetaValue(const std::string& rawValue) noexcept {
   leftIndex = DecodeFixed64(rawValue.data());
   rightIndex = DecodeFixed64(rawValue.data() + sizeof(leftIndex));
+}
+
+uint64_t ListMetaValue::GetLength() const {
+  return rightIndex - leftIndex + 1;
 }
 
 Slice ListMetaValue::Encode() const {
@@ -125,6 +130,20 @@ Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
     return db_->Put(WriteOptions(), nodeKey.Encode(), value);
   }
   return s;
+}
+
+Status RedisList::LPop(const Slice &key, uint64_t count, std::vector<std::string> *values) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (s.ok()) {
+    ListMetaValue metaValue(rawListMetaValue);
+    s = LRange(key, 0, int64_t(count - 1), values);
+    if (!s.ok()) return s;
+    // We do not have to delete the values physically but adjusting the boundary.
+    metaValue.leftIndex += std::min(count, metaValue.GetLength());
+    s = db_->Put(WriteOptions(), key, metaValue.Encode());
+    return Status::OK();
+  } else return s;
 }
 
 inline uint64_t RedisList::GetInternalIndex(int64_t userIndex, ListMetaValue metaValue) noexcept {

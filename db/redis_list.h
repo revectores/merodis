@@ -16,6 +16,7 @@ struct ListMetaValue {
   explicit ListMetaValue(const std::string& rawValue) noexcept;
   ~ListMetaValue() noexcept = default;
 
+  uint64_t GetLength() const;
   Slice Encode() const;
 
   uint64_t leftIndex;
@@ -46,6 +47,7 @@ public:
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
   Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
+  Status LPop(const Slice &key, uint64_t count, std::vector<std::string>* values) noexcept;
 
 private:
   static inline uint64_t GetInternalIndex(int64_t userIndex, ListMetaValue meta) noexcept;
