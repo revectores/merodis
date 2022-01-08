@@ -26,7 +26,7 @@ ListMetaValue::ListMetaValue(const std::string& rawValue) noexcept {
   rightIndex = DecodeFixed64(rawValue.data() + sizeof(leftIndex));
 }
 
-uint64_t ListMetaValue::GetLength() const {
+uint64_t ListMetaValue::Length() const {
   return rightIndex - leftIndex + 1;
 }
 
@@ -132,6 +132,21 @@ Status RedisList::LPush(const Slice &key, const Slice &value) noexcept {
   return s;
 }
 
+Status RedisList::LPop(const Slice &key, std::string *value) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+
+  ListMetaValue metaValue(rawListMetaValue);
+  if (!metaValue.Length()) return Status::OK();
+  ListNodeKey nodeKey(key, metaValue.leftIndex);
+  s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
+  if (!s.ok()) return s;
+  metaValue.leftIndex += 1;
+  s = db_->Put(WriteOptions(), key, metaValue.Encode());
+  return s;
+}
+
 Status RedisList::LPop(const Slice &key, uint64_t count, std::vector<std::string> *values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
@@ -140,10 +155,11 @@ Status RedisList::LPop(const Slice &key, uint64_t count, std::vector<std::string
     s = LRange(key, 0, int64_t(count - 1), values);
     if (!s.ok()) return s;
     // We do not have to delete the values physically but adjusting the boundary.
-    metaValue.leftIndex += std::min(count, metaValue.GetLength());
+    metaValue.leftIndex += std::min(count, metaValue.Length());
     s = db_->Put(WriteOptions(), key, metaValue.Encode());
     return Status::OK();
-  } else return s;
+  }
+  return s;
 }
 
 inline uint64_t RedisList::GetInternalIndex(int64_t userIndex, ListMetaValue metaValue) noexcept {

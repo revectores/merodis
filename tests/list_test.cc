@@ -8,7 +8,7 @@
 
 class ListTest : public RedisTest {};
 
-TEST_F(ListTest, LPush) {
+TEST_F(ListTest, LPUSH) {
   uint64_t len;
   std::string value;
   ASSERT_MERODIS_OK(db.LLen("key", &len));
@@ -36,7 +36,7 @@ TEST_F(ListTest, LPush) {
   ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", 2, &value));
 }
 
-TEST_F(ListTest, LRange) {
+TEST_F(ListTest, LRANGE) {
   ASSERT_MERODIS_OK(db.LPush("key", "2"));
   ASSERT_MERODIS_OK(db.LPush("key", "1"));
   ASSERT_MERODIS_OK(db.LPush("key", "0"));
@@ -63,11 +63,41 @@ TEST_F(ListTest, LRange) {
   ASSERT_EQ(values, std::vector<std::string>());
 }
 
-TEST_F(ListTest, LPop) {
+TEST_F(ListTest, LPOP_SINGLE) {
+  std::string value;
+  std::vector<std::string> values;
+  ASSERT_MERODIS_OK(db.LPush("key", "1"));
+  ASSERT_MERODIS_OK(db.LPush("key", "0"));
+  ASSERT_MERODIS_OK(db.LRange("key", 0, -1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"0", "1"}));
+  values.clear();
+
+  // ["0", "1"] => ["1"]
+  ASSERT_MERODIS_OK(db.LPop("key", &value));
+  ASSERT_EQ(value, "0");
+  ASSERT_MERODIS_OK(db.LRange("key", 0, -1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({"1"}));
+  values.clear();
+
+  // ["1"] => []
+  ASSERT_MERODIS_OK(db.LPop("key", &value));
+  ASSERT_EQ(value, "1");
+  ASSERT_MERODIS_OK(db.LRange("key", 0, -1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({}));
+  values.clear();
+
+  // [] => []
+  ASSERT_MERODIS_OK(db.LPop("key", &value));
+  ASSERT_MERODIS_OK(db.LRange("key", 0, -1, &values));
+  ASSERT_EQ(values, std::vector<std::string>({}));
+  values.clear();
+}
+
+TEST_F(ListTest, LPOP_MULTIPLE) {
+  std::vector<std::string> values;
   ASSERT_MERODIS_OK(db.LPush("key", "2"));
   ASSERT_MERODIS_OK(db.LPush("key", "1"));
   ASSERT_MERODIS_OK(db.LPush("key", "0"));
-  std::vector<std::string> values;
   ASSERT_MERODIS_OK(db.LRange("key", 0, -1, &values));
   ASSERT_EQ(values, std::vector<std::string>({"0", "1", "2"}));
   values.clear();
