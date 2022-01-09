@@ -7,12 +7,19 @@
 #include "leveldb/db.h"
 
 namespace merodis {
+
+enum BeforeOrAfter {
+  kBefore,
+  kAfter
+};
+
 using Options = leveldb::Options;
 using ReadOptions = leveldb::ReadOptions;
 using WriteOptions = leveldb::WriteOptions;
 using WriteBatch = leveldb::WriteBatch;
 using Status = leveldb::Status;
 using Slice = leveldb::Slice;
+using Iterator = leveldb::Iterator;
 
 class RedisString;
 class RedisList;
@@ -36,6 +43,7 @@ public:
   Status LPush(const Slice& key, const Slice& value) noexcept;
   Status LPop(const Slice& key, std::string* value) noexcept;
   Status LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
+  Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;
 
 private:
   RedisString* string_db_;

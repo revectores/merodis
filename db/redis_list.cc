@@ -12,7 +12,6 @@
 
 namespace merodis {
 
-
 ListMetaValue::ListMetaValue() noexcept :
   leftIndex(InitIndex),
   rightIndex(InitIndex) {}
@@ -41,9 +40,9 @@ ListNodeKey::ListNodeKey(Slice key, uint64_t index) noexcept :
   key(key),
   index(index) {}
 
-ListNodeKey::ListNodeKey(const std::string& rawValue) noexcept :
-  key(rawValue.data(), rawValue.length() - sizeof(index)) {
-  index = DecodeFixed64(rawValue.data() + rawValue.length() - sizeof(index));
+ListNodeKey::ListNodeKey(const Slice& rawValue) noexcept :
+  key(rawValue.data(), rawValue.size() - sizeof(index)) {
+  index = DecodeFixed64(rawValue.data() + rawValue.size() - sizeof(index));
 }
 
 Slice ListNodeKey::Encode() const {
@@ -98,7 +97,7 @@ Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector
 
   values->reserve(to_ - from_ + 1);
   uint64_t current_ = from_;
-  leveldb::Iterator* iter = db_->NewIterator(ReadOptions());
+  Iterator* iter = db_->NewIterator(ReadOptions());
   ListNodeKey firstKey(key, from_);
   for (iter->Seek(firstKey.Encode()); iter->Valid() && current_ <= to_; iter->Next(), current_++) {
     values->emplace_back(iter->value().ToString());
@@ -154,6 +153,51 @@ Status RedisList::LPop(const Slice& key, uint64_t count, std::vector<std::string
   // We do not have to delete the values physically but adjusting the boundary.
   metaValue.leftIndex += std::min(count, metaValue.Length());
   s = db_->Put(WriteOptions(), key, metaValue.Encode());
+  return Status::OK();
+}
+
+Status RedisList::LInsert(const Slice& key,
+                          const BeforeOrAfter& beforeOrAfter,
+                          const Slice& pivotValue,
+                          const Slice& value) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+  ListMetaValue metaValue(rawListMetaValue);
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  uint64_t current = metaValue.leftIndex;
+  ListNodeKey firstKey(key, current);
+  uint64_t pivotIndex = 0;
+  for (iter->Seek(firstKey.Encode());
+       iter->Valid() && current <= metaValue.rightIndex;
+       iter->Next(), current++) {
+    if (iter->value().ToString() == pivotValue) {
+      ListNodeKey pivotKey(iter->key());
+      pivotIndex = pivotKey.index;
+      if (beforeOrAfter == kAfter) {
+        pivotIndex += 1;
+        iter->Next();
+        current++;
+      }
+      break;
+    }
+  }
+  if (!pivotIndex) return Status::NotFound("");
+
+  WriteBatch updates;
+  ListNodeKey newKey(key, pivotIndex);
+  updates.Put(newKey.Encode(), value);
+  for (; iter->Valid() && current <= metaValue.rightIndex; iter->Next(), current++) {
+    ListNodeKey nodeKey(iter->key());
+    nodeKey.index += 1;
+    updates.Put(nodeKey.Encode(), iter->value());
+  }
+  metaValue.rightIndex += 1;
+  updates.Put(key, metaValue.Encode());
+  s = db_->Write(WriteOptions(), &updates);
+
+  delete iter;
   return Status::OK();
 }
 

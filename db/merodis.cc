@@ -62,8 +62,12 @@ Status Merodis::LPop(const Slice& key, std::string* value) noexcept {
   return list_db_->LPop(key, value);
 }
 
-Status Merodis::LPop(const Slice& key, uint64_t count, std::vector<std::string> *values) noexcept {
+Status Merodis::LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept {
   return list_db_->LPop(key, count, values);
+}
+
+Status Merodis::LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept {
+  return list_db_->LInsert(key, beforeOrAfter, pivotValue, value);
 }
 
 }

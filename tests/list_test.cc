@@ -34,6 +34,12 @@ public:
   std::vector<std::string> List(const Slice& key) {
     return LRange(key, 0, -1);
   }
+  void LPush(const Slice& key, const Slice& value) {
+    EXPECT_MERODIS_OK(db.LPush(key, value));
+  }
+  void LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
+    EXPECT_MERODIS_OK(db.LInsert(key, beforeOrAfter, pivotValue, value));
+  }
   std::string LPop(const Slice& key) {
     std::string value;
     EXPECT_MERODIS_OK(db.LPop(key, &value));
@@ -46,11 +52,15 @@ public:
   }
 
   uint64_t LLen() { return LLen(key_); }
-  std::string LIndex(int64_t index) { return LIndex(key_, index); };
-  std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); };
-  std::vector<std::string> List() { return List(key_); };
-  std::string LPop() { return LPop(key_); };
-  std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); };
+  std::string LIndex(int64_t index) { return LIndex(key_, index); }
+  std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
+  std::vector<std::string> List() { return List(key_); }
+  void LPush(const Slice& value) { LPush(key_, value); }
+  void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
+    LInsert(key_, beforeOrAfter, pivotValue, value);
+  };
+  std::string LPop() { return LPop(key_); }
+  std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); }
   void SetKey(const Slice& key) { key_ = key; }
 
 private:
@@ -132,6 +142,24 @@ TEST_F(ListTest, LPOP_MULTIPLE) {
   ASSERT_MERODIS_OK(db.LPush("key", "value-1"));
   ASSERT_MERODIS_OK(db.LPush("key", "value-0"));
   ASSERT_EQ(List(), LIST("value-0", "value-1"));
+}
+
+TEST_F(ListTest, LINSERT) {
+  LPush( "2");
+  LPush( "1");
+  LPush( "0");
+  ASSERT_EQ(List(), LIST("0", "1", "2"));
+
+  LInsert(kBefore, "1", "0.5");
+  ASSERT_EQ(List(), LIST("0", "0.5", "1", "2"));
+  LInsert(kBefore, "0", "-1");
+  ASSERT_EQ(List(), LIST("-1", "0", "0.5", "1", "2"));
+  LInsert(kAfter, "1", "1.5");
+  ASSERT_EQ(List(), LIST("-1", "0", "0.5", "1", "1.5", "2"));
+  LInsert(kAfter, "2", "3");
+  ASSERT_EQ(List(), LIST("-1", "0", "0.5", "1", "1.5", "2", "3"));
+  LPush("-2");
+  ASSERT_EQ(List(), LIST("-2", "-1", "0", "0.5", "1", "1.5", "2", "3"));
 }
 
 }

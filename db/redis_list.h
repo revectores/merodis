@@ -25,7 +25,7 @@ struct ListMetaValue {
 
 struct ListNodeKey {
   explicit ListNodeKey(Slice key, uint64_t index) noexcept;
-  explicit ListNodeKey(const std::string& rawValue) noexcept;
+  explicit ListNodeKey(const Slice& rawValue) noexcept;
   ~ListNodeKey() noexcept = default;
 
   Slice Encode() const;
@@ -49,6 +49,7 @@ public:
   Status LPush(const Slice& key, const Slice& value) noexcept;
   Status LPop(const Slice& key, std::string* value) noexcept;
   Status LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
+  Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;
 
 private:
   static inline uint64_t GetInternalIndex(int64_t userIndex, ListMetaValue meta) noexcept;
