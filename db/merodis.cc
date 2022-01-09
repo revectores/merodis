@@ -58,6 +58,10 @@ Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {
   return list_db_->LPush(key, value);
 }
 
+Status Merodis::LPush(const Slice &key, const std::vector<const Slice> &values) noexcept {
+  return list_db_->LPush(key, values);
+}
+
 Status Merodis::LPop(const Slice& key, std::string* value) noexcept {
   return list_db_->LPop(key, value);
 }

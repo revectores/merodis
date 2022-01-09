@@ -13,7 +13,7 @@
 namespace merodis {
 
 ListMetaValue::ListMetaValue() noexcept :
-  leftIndex(InitIndex),
+  leftIndex(InitIndex + 1),
   rightIndex(InitIndex) {}
 
 ListMetaValue::ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept :
@@ -107,24 +107,25 @@ Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector
 }
 
 Status RedisList::LPush(const Slice& key, const Slice& value) noexcept {
+  return LPush(key, std::vector<const Slice>{value});
+}
+
+Status RedisList::LPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
-  if (s.ok()) {
-    ListMetaValue metaValue(rawListMetaValue);
-    metaValue.leftIndex--;
-    s = db_->Put(WriteOptions(), key, metaValue.Encode());
-    if (!s.ok()) return s;
-    ListNodeKey nodeKey(key, metaValue.leftIndex);
-    return db_->Put(WriteOptions(), nodeKey.Encode(), value);
-  } else if (s.IsNotFound()) {
-    ListMetaValue metaValue;
-    s = db_->Put(WriteOptions(), key, metaValue.Encode());
-    std::string v;
-    if (!s.ok()) return s;
-    ListNodeKey nodeKey(key, metaValue.leftIndex);
-    return db_->Put(WriteOptions(), nodeKey.Encode(), value);
+  if (!s.ok() && !s.IsNotFound()) return s;
+
+  ListMetaValue metaValue;
+  if (s.ok()) metaValue = ListMetaValue(rawListMetaValue);
+
+  WriteBatch updates;
+  metaValue.leftIndex -= values.size();
+  updates.Put(key, metaValue.Encode());
+  uint64_t currentIndex = metaValue.leftIndex;
+  for (auto it = values.rbegin(); it != values.rend(); it++, currentIndex++) {
+    updates.Put(ListNodeKey(key, currentIndex).Encode(), *it);
   }
-  return s;
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisList::LPop(const Slice& key, std::string* value) noexcept {

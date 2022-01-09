@@ -37,6 +37,9 @@ public:
   void LPush(const Slice& key, const Slice& value) {
     EXPECT_MERODIS_OK(db.LPush(key, value));
   }
+  void LPush(const Slice& key, const std::vector<const Slice>& values) {
+    EXPECT_MERODIS_OK(db.LPush(key, values));
+  }
   void LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     EXPECT_MERODIS_OK(db.LInsert(key, beforeOrAfter, pivotValue, value));
   }
@@ -56,6 +59,7 @@ public:
   std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
   std::vector<std::string> List() { return List(key_); }
   void LPush(const Slice& value) { LPush(key_, value); }
+  void LPush(const std::vector<const Slice>& values) { LPush(key_, values); }
   void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     LInsert(key_, beforeOrAfter, pivotValue, value);
   };
@@ -97,6 +101,13 @@ TEST_F(ListTest, LRANGE) {
   ASSERT_EQ(LRange(-100, 100), LIST("0", "1", "2"));
   ASSERT_EQ(LRange(5, 10), LIST());
   ASSERT_EQ(LRange(-3, -6), LIST());
+}
+
+TEST_F(ListTest, LPUSH) {
+  LPush({"2", "1"});
+  ASSERT_EQ(List(), LIST("1", "2"));
+  LPush("0");
+  ASSERT_EQ(List(), LIST("0", "1", "2"));
 }
 
 TEST_F(ListTest, LPOP_SINGLE) {
