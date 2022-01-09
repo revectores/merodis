@@ -106,14 +106,14 @@ Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector
   return Status::OK();
 }
 
-Status RedisList::LPush(const Slice& key, const Slice& value) noexcept {
-  return LPush(key, std::vector<const Slice>{value});
+Status RedisList::LPush(const Slice& key, const Slice& value, bool createListIfNotFound) noexcept {
+  return LPush(key, std::vector<const Slice>{value}, createListIfNotFound);
 }
 
-Status RedisList::LPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
+Status RedisList::LPush(const Slice& key, const std::vector<const Slice>& values, bool createListIfNotFound) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
-  if (!s.ok() && !s.IsNotFound()) return s;
+  if (!(s.ok() || s.IsNotFound() && createListIfNotFound)) return s;
 
   ListMetaValue metaValue;
   if (s.ok()) metaValue = ListMetaValue(rawListMetaValue);

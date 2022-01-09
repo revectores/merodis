@@ -55,11 +55,19 @@ Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<s
 }
 
 Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {
-  return list_db_->LPush(key, value);
+  return list_db_->LPush(key, value, true);
 }
 
-Status Merodis::LPush(const Slice &key, const std::vector<const Slice> &values) noexcept {
-  return list_db_->LPush(key, values);
+Status Merodis::LPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
+  return list_db_->LPush(key, values, true);
+}
+
+Status Merodis::LPushX(const Slice& key, const Slice& value) noexcept {
+  return list_db_->LPush(key, value, false);
+}
+
+Status Merodis::LPushX(const Slice& key, const std::vector<const Slice>& values) noexcept {
+  return list_db_->LPush(key, values, false);
 }
 
 Status Merodis::LPop(const Slice& key, std::string* value) noexcept {

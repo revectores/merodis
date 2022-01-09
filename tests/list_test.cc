@@ -108,6 +108,8 @@ TEST_F(ListTest, LPUSH) {
   ASSERT_EQ(List(), LIST("1", "2"));
   LPush("0");
   ASSERT_EQ(List(), LIST("0", "1", "2"));
+  ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", "0"));
+  ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", {"0", "1"}));
 }
 
 TEST_F(ListTest, LPOP_SINGLE) {
