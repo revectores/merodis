@@ -40,6 +40,12 @@ public:
   void LPush(const Slice& key, const std::vector<const Slice>& values) {
     EXPECT_MERODIS_OK(db.LPush(key, values));
   }
+  void RPush(const Slice& key, const Slice& value) {
+    EXPECT_MERODIS_OK(db.RPush(key, value));
+  }
+  void RPush(const Slice& key, const std::vector<const Slice>& values) {
+    EXPECT_MERODIS_OK(db.RPush(key, values));
+  }
   void LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     EXPECT_MERODIS_OK(db.LInsert(key, beforeOrAfter, pivotValue, value));
   }
@@ -53,6 +59,16 @@ public:
     EXPECT_MERODIS_OK(db.LPop(key, count, &values));
     return values;
   }
+  std::string RPop(const Slice& key) {
+    std::string value;
+    EXPECT_MERODIS_OK(db.RPop(key, &value));
+    return value;
+  }
+  std::vector<std::string> RPop(const Slice& key, uint64_t count) {
+    std::vector<std::string> values;
+    EXPECT_MERODIS_OK(db.RPop(key, count, &values));
+    return values;
+  }
 
   uint64_t LLen() { return LLen(key_); }
   std::string LIndex(int64_t index) { return LIndex(key_, index); }
@@ -60,11 +76,15 @@ public:
   std::vector<std::string> List() { return List(key_); }
   void LPush(const Slice& value) { LPush(key_, value); }
   void LPush(const std::vector<const Slice>& values) { LPush(key_, values); }
+  void RPush(const Slice& value) { RPush(key_, value); }
+  void RPush(const std::vector<const Slice>& values) { RPush(key_, values); }
   void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     LInsert(key_, beforeOrAfter, pivotValue, value);
   };
   std::string LPop() { return LPop(key_); }
   std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); }
+  std::string RPop() { return RPop(key_); }
+  std::vector<std::string> RPop(uint64_t count) { return RPop(key_, count); }
   void SetKey(const Slice& key) { key_ = key; }
 
 private:
@@ -91,10 +111,7 @@ TEST_F(ListTest, LINDEX) {
 }
 
 TEST_F(ListTest, LRANGE) {
-  // [] => ["0", "1", "2"]
-  ASSERT_MERODIS_OK(db.LPush("key", "2"));
-  ASSERT_MERODIS_OK(db.LPush("key", "1"));
-  ASSERT_MERODIS_OK(db.LPush("key", "0"));
+  RPush({"0", "1", "2"});
   ASSERT_EQ(LRange(0, 0), LIST("0"));
   ASSERT_EQ(LRange(-3, 1), LIST("0", "1"));
   ASSERT_EQ(LRange(-3, -1), LIST("0", "1", "2"));
@@ -103,20 +120,25 @@ TEST_F(ListTest, LRANGE) {
   ASSERT_EQ(LRange(-3, -6), LIST());
 }
 
-TEST_F(ListTest, LPUSH) {
+TEST_F(ListTest, PUSH) {
   LPush({"2", "1"});
   ASSERT_EQ(List(), LIST("1", "2"));
   LPush("0");
   ASSERT_EQ(List(), LIST("0", "1", "2"));
+
+  RPush("3");
+  ASSERT_EQ(List(), LIST("0", "1", "2", "3"));
+  RPush({"4", "5"});
+  ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5"));
+
   ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", "0"));
   ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", {"0", "1"}));
+  ASSERT_MERODIS_ISNOTFOUND(db.RPushX("no-such-key", "0"));
+  ASSERT_MERODIS_ISNOTFOUND(db.RPushX("no-such-key", {"0", "1"}));
 }
 
 TEST_F(ListTest, LPOP_SINGLE) {
-  std::string value;
-  std::vector<std::string> values;
-  ASSERT_MERODIS_OK(db.LPush("key", "1"));
-  ASSERT_MERODIS_OK(db.LPush("key", "0"));
+  RPush("key", {"0", "1"});
   ASSERT_EQ(List(), LIST("0", "1"));
 
   // ["0", "1"] => ["1"]
@@ -132,28 +154,43 @@ TEST_F(ListTest, LPOP_SINGLE) {
   ASSERT_EQ(List(), LIST());
 }
 
-TEST_F(ListTest, LPOP_MULTIPLE) {
-  ASSERT_MERODIS_OK(db.LPush("key", "2"));
-  ASSERT_MERODIS_OK(db.LPush("key", "1"));
-  ASSERT_MERODIS_OK(db.LPush("key", "0"));
-  ASSERT_EQ(List(), LIST("0", "1", "2"));
+TEST_F(ListTest, RPOP_SINGLE) {
+  RPush("key", {"0", "1"});
+  ASSERT_EQ(List(), LIST("0", "1"));
 
-  // ["0", "1", "2"] => ["1", "2"]
-  ASSERT_EQ(LPop(1), LIST("0"));
-  ASSERT_EQ(List(), LIST("1", "2"));
+  // ["0", "1"] => ["0"]
+  ASSERT_EQ(RPop(), "1");
+  ASSERT_EQ(List(), LIST("0"));
 
-  // ["1", "2"] => []
-  ASSERT_EQ(LPop(2), LIST("1", "2"));
+  // ["0"] => []
+  ASSERT_EQ(RPop(), "0");
   ASSERT_EQ(List(), LIST());
 
   // [] => []
-  ASSERT_EQ(LPop(3), LIST());
+  ASSERT_EQ(RPop(), "");
+  ASSERT_EQ(List(), LIST());
+}
+
+TEST_F(ListTest, RPOP_MULTIPLE) {
+  RPush("key", {"0", "1", "2"});
+  ASSERT_EQ(List(), LIST("0", "1", "2"));
+
+  // ["0", "1", "2"] => ["1", "2"]
+  ASSERT_EQ(RPop(1), LIST("2"));
+  ASSERT_EQ(List(), LIST("0", "1"));
+
+  // ["1", "2"] => []
+  ASSERT_EQ(RPop(2), LIST("0", "1"));
   ASSERT_EQ(List(), LIST());
 
-  // Make sure LPUSH can be successfully done after LPOP.
+  // [] => []
+  ASSERT_EQ(RPop(3), LIST());
+  ASSERT_EQ(List(), LIST());
+
+  // Make sure RPUSH can be successfully done after RPOP.
   // [] => ["value-0", "value-1"]
-  ASSERT_MERODIS_OK(db.LPush("key", "value-1"));
-  ASSERT_MERODIS_OK(db.LPush("key", "value-0"));
+  ASSERT_MERODIS_OK(db.RPush("key", "value-0"));
+  ASSERT_MERODIS_OK(db.RPush("key", "value-1"));
   ASSERT_EQ(List(), LIST("value-0", "value-1"));
 }
 

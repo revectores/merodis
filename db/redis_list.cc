@@ -60,7 +60,8 @@ Status RedisList::Open(const Options& options, const std::string& db_path) noexc
   return leveldb::DB::Open(options, db_path, &db_);
 }
 
-Status RedisList::LLen(const Slice& key, uint64_t *len) noexcept {
+Status RedisList::LLen(const Slice& key,
+                       uint64_t *len) noexcept {
   std::string rawListMetaValue;
   merodis::Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
@@ -76,7 +77,9 @@ Status RedisList::LLen(const Slice& key, uint64_t *len) noexcept {
   }
 }
 
-Status RedisList::LIndex(const Slice& key, int64_t index, std::string* value) noexcept {
+Status RedisList::LIndex(const Slice& key,
+                         int64_t index,
+                         std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -85,7 +88,10 @@ Status RedisList::LIndex(const Slice& key, int64_t index, std::string* value) no
   return db_->Get(ReadOptions(), nodeKey.Encode(), value);
 }
 
-Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
+Status RedisList::LRange(const Slice& key,
+                         int64_t from,
+                         int64_t to,
+                         std::vector<std::string>* values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -106,11 +112,17 @@ Status RedisList::LRange(const Slice& key, int64_t from, int64_t to, std::vector
   return Status::OK();
 }
 
-Status RedisList::LPush(const Slice& key, const Slice& value, bool createListIfNotFound) noexcept {
-  return LPush(key, std::vector<const Slice>{value}, createListIfNotFound);
+Status RedisList::Push(const Slice& key,
+                       const Slice& value,
+                       bool createListIfNotFound,
+                       enum LeftOrRight leftOrRight) noexcept {
+  return Push(key, std::vector<const Slice>{value}, createListIfNotFound, leftOrRight);
 }
 
-Status RedisList::LPush(const Slice& key, const std::vector<const Slice>& values, bool createListIfNotFound) noexcept {
+Status RedisList::Push(const Slice& key,
+                       const std::vector<const Slice>& values,
+                       bool createListIfNotFound,
+                       enum LeftOrRight leftOrRight) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!(s.ok() || s.IsNotFound() && createListIfNotFound)) return s;
@@ -119,40 +131,65 @@ Status RedisList::LPush(const Slice& key, const std::vector<const Slice>& values
   if (s.ok()) metaValue = ListMetaValue(rawListMetaValue);
 
   WriteBatch updates;
-  metaValue.leftIndex -= values.size();
-  updates.Put(key, metaValue.Encode());
-  uint64_t currentIndex = metaValue.leftIndex;
-  for (auto it = values.rbegin(); it != values.rend(); it++, currentIndex++) {
-    updates.Put(ListNodeKey(key, currentIndex).Encode(), *it);
+  if (leftOrRight == kLeft) {
+    metaValue.leftIndex -= values.size();
+    updates.Put(key, metaValue.Encode());
+    uint64_t currentIndex = metaValue.leftIndex;
+    for (auto it = values.rbegin(); it != values.rend(); it++, currentIndex++) {
+      updates.Put(ListNodeKey(key, currentIndex).Encode(), *it);
+    }
+  } else {
+    uint64_t currentIndex = metaValue.rightIndex + 1;
+    metaValue.rightIndex += values.size();
+    updates.Put(key, metaValue.Encode());
+    for (auto it = values.begin(); it != values.end(); it++, currentIndex++) {
+      updates.Put(ListNodeKey(key, currentIndex).Encode(), *it);
+    }
   }
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisList::LPop(const Slice& key, std::string* value) noexcept {
+Status RedisList::Pop(const Slice& key,
+                      std::string* value,
+                      enum LeftOrRight leftOrRight) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
   ListMetaValue metaValue(rawListMetaValue);
 
   if (!metaValue.Length()) return Status::OK();
-  ListNodeKey nodeKey(key, metaValue.leftIndex);
-  s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
-  if (!s.ok()) return s;
-  metaValue.leftIndex += 1;
-  s = db_->Put(WriteOptions(), key, metaValue.Encode());
-  return s;
+  if (leftOrRight == kLeft) {
+    ListNodeKey nodeKey(key, metaValue.leftIndex);
+    s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
+    if (!s.ok()) return s;
+    metaValue.leftIndex += 1;
+  } else {
+    ListNodeKey nodeKey(key, metaValue.rightIndex);
+    s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
+    if (!s.ok()) return s;
+    metaValue.rightIndex -= 1;
+  }
+  return db_->Put(WriteOptions(), key, metaValue.Encode());
 }
 
-Status RedisList::LPop(const Slice& key, uint64_t count, std::vector<std::string> *values) noexcept {
+Status RedisList::Pop(const Slice& key,
+                      uint64_t count,
+                      std::vector<std::string> *values,
+                      enum LeftOrRight leftOrRight) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
   ListMetaValue metaValue(rawListMetaValue);
 
-  s = LRange(key, 0, int64_t(count - 1), values);
-  if (!s.ok()) return s;
-  // We do not have to delete the values physically but adjusting the boundary.
-  metaValue.leftIndex += std::min(count, metaValue.Length());
+  if (leftOrRight == kLeft) {
+    s = LRange(key, 0, int64_t(count - 1), values);
+    if (!s.ok()) return s;
+    metaValue.leftIndex += std::min(count, metaValue.Length());
+  } else {
+    s = LRange(key, -int64_t(count), -1, values);
+    if (!s.ok()) return s;
+    metaValue.rightIndex -= std::min(count, metaValue.Length());
+  }
   s = db_->Put(WriteOptions(), key, metaValue.Encode());
   return Status::OK();
 }

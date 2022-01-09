@@ -12,6 +12,10 @@ enum BeforeOrAfter {
   kBefore,
   kAfter
 };
+enum LeftOrRight {
+  kLeft,
+  kRight
+};
 
 using Options = leveldb::Options;
 using ReadOptions = leveldb::ReadOptions;
@@ -46,6 +50,12 @@ public:
   Status LPushX(const Slice& key, const std::vector<const Slice>& values) noexcept;
   Status LPop(const Slice& key, std::string* value) noexcept;
   Status LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
+  Status RPush(const Slice& key, const Slice& value) noexcept;
+  Status RPush(const Slice& key, const std::vector<const Slice>& values) noexcept;
+  Status RPushX(const Slice& key, const Slice& value) noexcept;
+  Status RPushX(const Slice& key, const std::vector<const Slice>& values) noexcept;
+  Status RPop(const Slice& key, std::string* value) noexcept;
+  Status RPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
   Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;
 
 private:

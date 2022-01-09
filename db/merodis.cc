@@ -55,27 +55,51 @@ Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<s
 }
 
 Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {
-  return list_db_->LPush(key, value, true);
+  return list_db_->Push(key, value, true, kLeft);
 }
 
 Status Merodis::LPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
-  return list_db_->LPush(key, values, true);
+  return list_db_->Push(key, values, true, kLeft);
 }
 
 Status Merodis::LPushX(const Slice& key, const Slice& value) noexcept {
-  return list_db_->LPush(key, value, false);
+  return list_db_->Push(key, value, false, kLeft);
 }
 
 Status Merodis::LPushX(const Slice& key, const std::vector<const Slice>& values) noexcept {
-  return list_db_->LPush(key, values, false);
+  return list_db_->Push(key, values, false, kLeft);
 }
 
 Status Merodis::LPop(const Slice& key, std::string* value) noexcept {
-  return list_db_->LPop(key, value);
+  return list_db_->Pop(key, value, kLeft);
 }
 
 Status Merodis::LPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept {
-  return list_db_->LPop(key, count, values);
+  return list_db_->Pop(key, count, values, kLeft);
+}
+
+Status Merodis::RPush(const Slice& key, const Slice& value) noexcept {
+  return list_db_->Push(key, value, true, kRight);
+}
+
+Status Merodis::RPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
+  return list_db_->Push(key, values, true, kRight);
+}
+
+Status Merodis::RPushX(const Slice& key, const Slice& value) noexcept {
+  return list_db_->Push(key, value, false, kRight);
+}
+
+Status Merodis::RPushX(const Slice& key, const std::vector<const Slice>& values) noexcept {
+  return list_db_->Push(key, values, false, kRight);
+}
+
+Status Merodis::RPop(const Slice& key, std::string* value) noexcept {
+  return list_db_->Pop(key, value, kRight);
+}
+
+Status Merodis::RPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept {
+  return list_db_->Pop(key, count, values, kRight);
 }
 
 Status Merodis::LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept {
