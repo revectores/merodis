@@ -69,7 +69,11 @@ public:
     EXPECT_MERODIS_OK(db.RPop(key, count, &values));
     return values;
   }
-
+  std::string LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide) {
+    std::string value;
+    EXPECT_MERODIS_OK(db.LMove(srcKey, dstKey, srcSide, dstSide, &value));
+    return value;
+  }
   uint64_t LLen() { return LLen(key_); }
   std::string LIndex(int64_t index) { return LIndex(key_, index); }
   std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
@@ -195,9 +199,7 @@ TEST_F(ListTest, RPOP_MULTIPLE) {
 }
 
 TEST_F(ListTest, LINSERT) {
-  LPush( "2");
-  LPush( "1");
-  LPush( "0");
+  RPush("key", {"0", "1", "2"});
   ASSERT_EQ(List(), LIST("0", "1", "2"));
 
   LInsert(kBefore, "1", "0.5");
@@ -210,6 +212,39 @@ TEST_F(ListTest, LINSERT) {
   ASSERT_EQ(List(), LIST("-1", "0", "0.5", "1", "1.5", "2", "3"));
   LPush("-2");
   ASSERT_EQ(List(), LIST("-2", "-1", "0", "0.5", "1", "1.5", "2", "3"));
+}
+
+TEST_F(ListTest, LMOVE) {
+  RPush("k1", {"0", "1", "2"});
+  RPush("k2", {"a", "b", "c"});
+
+  ASSERT_EQ(LMove("k1", "k2", kLeft, kLeft), "0");
+  ASSERT_EQ(List("k1"), LIST("1", "2"));
+  ASSERT_EQ(List("k2"), LIST("0", "a", "b", "c"));
+
+  ASSERT_EQ(LMove("k2", "k1", kRight, kRight), "c");
+  ASSERT_EQ(List("k1"), LIST("1", "2", "c"));
+  ASSERT_EQ(List("k2"), LIST("0", "a", "b"));
+
+  ASSERT_EQ(LMove("k1", "k2", kLeft, kRight), "1");
+  ASSERT_EQ(List("k1"), LIST("2", "c"));
+  ASSERT_EQ(List("k2"), LIST("0", "a", "b", "1"));
+
+  ASSERT_EQ(LMove("k2", "k1", kRight, kLeft), "1");
+  ASSERT_EQ(List("k1"), LIST("1", "2", "c"));
+  ASSERT_EQ(List("k2"), LIST("0", "a", "b"));
+
+  ASSERT_EQ(LMove("k1", "k1", kLeft, kRight), "1");
+  ASSERT_EQ(List("k1"), LIST("2", "c", "1"));
+
+  ASSERT_EQ(LMove("k2", "k2", kRight, kLeft), "b");
+  ASSERT_EQ(List("k2"), LIST("b", "0", "a"));
+
+  ASSERT_EQ(LMove("k1", "k1", kLeft, kLeft), "");
+  ASSERT_EQ(List("k1"), LIST("2", "c", "1"));
+
+  ASSERT_EQ(LMove("k2", "k2", kRight, kRight), "");
+  ASSERT_EQ(List("k2"), LIST("b", "0", "a"));
 }
 
 }

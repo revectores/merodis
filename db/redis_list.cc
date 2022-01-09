@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
@@ -115,14 +116,14 @@ Status RedisList::LRange(const Slice& key,
 Status RedisList::Push(const Slice& key,
                        const Slice& value,
                        bool createListIfNotFound,
-                       enum LeftOrRight leftOrRight) noexcept {
-  return Push(key, std::vector<const Slice>{value}, createListIfNotFound, leftOrRight);
+                       enum Side side) noexcept {
+  return Push(key, std::vector<const Slice>{value}, createListIfNotFound, side);
 }
 
 Status RedisList::Push(const Slice& key,
                        const std::vector<const Slice>& values,
                        bool createListIfNotFound,
-                       enum LeftOrRight leftOrRight) noexcept {
+                       enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!(s.ok() || s.IsNotFound() && createListIfNotFound)) return s;
@@ -131,7 +132,7 @@ Status RedisList::Push(const Slice& key,
   if (s.ok()) metaValue = ListMetaValue(rawListMetaValue);
 
   WriteBatch updates;
-  if (leftOrRight == kLeft) {
+  if (side == kLeft) {
     metaValue.leftIndex -= values.size();
     updates.Put(key, metaValue.Encode());
     uint64_t currentIndex = metaValue.leftIndex;
@@ -151,14 +152,14 @@ Status RedisList::Push(const Slice& key,
 
 Status RedisList::Pop(const Slice& key,
                       std::string* value,
-                      enum LeftOrRight leftOrRight) noexcept {
+                      enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
   ListMetaValue metaValue(rawListMetaValue);
 
   if (!metaValue.Length()) return Status::OK();
-  if (leftOrRight == kLeft) {
+  if (side == kLeft) {
     ListNodeKey nodeKey(key, metaValue.leftIndex);
     s = db_->Get(ReadOptions(), nodeKey.Encode(), value);
     if (!s.ok()) return s;
@@ -175,13 +176,13 @@ Status RedisList::Pop(const Slice& key,
 Status RedisList::Pop(const Slice& key,
                       uint64_t count,
                       std::vector<std::string> *values,
-                      enum LeftOrRight leftOrRight) noexcept {
+                      enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
   ListMetaValue metaValue(rawListMetaValue);
 
-  if (leftOrRight == kLeft) {
+  if (side == kLeft) {
     s = LRange(key, 0, int64_t(count - 1), values);
     if (!s.ok()) return s;
     metaValue.leftIndex += std::min(count, metaValue.Length());
@@ -237,6 +238,38 @@ Status RedisList::LInsert(const Slice& key,
 
   delete iter;
   return Status::OK();
+}
+
+Status RedisList::LMove(const Slice& srcKey,
+                        const Slice& dstKey,
+                        enum Side srcSide,
+                        enum Side dstSide,
+                        std::string* value) noexcept {
+  if (srcKey == dstKey && srcSide == dstSide) return Status::OK();
+
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), srcKey, &rawListMetaValue);
+  if (!s.ok()) return s;
+  std::shared_ptr<ListMetaValue> srcMetaValue = std::make_shared<ListMetaValue>(rawListMetaValue);
+  std::shared_ptr<ListMetaValue> dstMetaValue = srcMetaValue;
+  if (srcKey != dstKey) {
+    s = db_->Get(ReadOptions(), dstKey, &rawListMetaValue);
+    if (!s.ok() && !s.IsNotFound()) return s;
+    if (s.ok()) dstMetaValue = std::make_shared<ListMetaValue>(rawListMetaValue);
+  }
+
+  ListNodeKey srcNodeKey(srcKey, srcSide == kLeft ? srcMetaValue->leftIndex : srcMetaValue->rightIndex);
+  ListNodeKey dstNodeKey(dstKey, dstSide == kLeft ? dstMetaValue->leftIndex - 1: dstMetaValue->rightIndex + 1);
+  srcSide == kLeft ? srcMetaValue->leftIndex += 1 : srcMetaValue->rightIndex -= 1;
+  dstSide == kLeft ? dstMetaValue->leftIndex -= 1 : dstMetaValue->rightIndex += 1;
+
+  s = db_->Get(ReadOptions(), srcNodeKey.Encode(), value);
+  if (!s.ok()) return s;
+  WriteBatch updates;
+  updates.Put(dstNodeKey.Encode(), *value);
+  updates.Put(srcKey, srcMetaValue->Encode());
+  if (srcKey != dstKey) updates.Put(dstKey, dstMetaValue->Encode());
+  return db_->Write(WriteOptions(), &updates);
 }
 
 inline uint64_t RedisList::GetInternalIndex(int64_t userIndex, ListMetaValue metaValue) noexcept {
