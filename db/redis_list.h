@@ -47,7 +47,7 @@ public:
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
   Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
   Status Push(const Slice& key, const Slice& value, bool createListIfNotFound, enum Side side) noexcept;
-  Status Push(const Slice& key, const std::vector<const Slice>& values, bool createListIfNotFound, enum Side side) noexcept;
+  Status Push(const Slice& key, const std::vector<Slice>& values, bool createListIfNotFound, enum Side side) noexcept;
   Status Pop(const Slice& key, std::string* value, enum Side side) noexcept;
   Status Pop(const Slice& key, uint64_t count, std::vector<std::string>* values, enum Side side) noexcept;
   Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;

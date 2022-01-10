@@ -37,13 +37,13 @@ public:
   void LPush(const Slice& key, const Slice& value) {
     EXPECT_MERODIS_OK(db.LPush(key, value));
   }
-  void LPush(const Slice& key, const std::vector<const Slice>& values) {
+  void LPush(const Slice& key, const std::vector<Slice>& values) {
     EXPECT_MERODIS_OK(db.LPush(key, values));
   }
   void RPush(const Slice& key, const Slice& value) {
     EXPECT_MERODIS_OK(db.RPush(key, value));
   }
-  void RPush(const Slice& key, const std::vector<const Slice>& values) {
+  void RPush(const Slice& key, const std::vector<Slice>& values) {
     EXPECT_MERODIS_OK(db.RPush(key, values));
   }
   void LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
@@ -79,9 +79,9 @@ public:
   std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
   std::vector<std::string> List() { return List(key_); }
   void LPush(const Slice& value) { LPush(key_, value); }
-  void LPush(const std::vector<const Slice>& values) { LPush(key_, values); }
+  void LPush(const std::vector<Slice>& values) { LPush(key_, values); }
   void RPush(const Slice& value) { RPush(key_, value); }
-  void RPush(const std::vector<const Slice>& values) { RPush(key_, values); }
+  void RPush(const std::vector<Slice>& values) { RPush(key_, values); }
   void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     LInsert(key_, beforeOrAfter, pivotValue, value);
   };

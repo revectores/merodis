@@ -117,11 +117,11 @@ Status RedisList::Push(const Slice& key,
                        const Slice& value,
                        bool createListIfNotFound,
                        enum Side side) noexcept {
-  return Push(key, std::vector<const Slice>{value}, createListIfNotFound, side);
+  return Push(key, std::vector<Slice>{value}, createListIfNotFound, side);
 }
 
 Status RedisList::Push(const Slice& key,
-                       const std::vector<const Slice>& values,
+                       const std::vector<Slice>& values,
                        bool createListIfNotFound,
                        enum Side side) noexcept {
   std::string rawListMetaValue;

@@ -58,7 +58,7 @@ Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {
   return list_db_->Push(key, value, true, kLeft);
 }
 
-Status Merodis::LPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
+Status Merodis::LPush(const Slice& key, const std::vector<Slice>& values) noexcept {
   return list_db_->Push(key, values, true, kLeft);
 }
 
@@ -66,7 +66,7 @@ Status Merodis::LPushX(const Slice& key, const Slice& value) noexcept {
   return list_db_->Push(key, value, false, kLeft);
 }
 
-Status Merodis::LPushX(const Slice& key, const std::vector<const Slice>& values) noexcept {
+Status Merodis::LPushX(const Slice& key, const std::vector<Slice>& values) noexcept {
   return list_db_->Push(key, values, false, kLeft);
 }
 
@@ -82,7 +82,7 @@ Status Merodis::RPush(const Slice& key, const Slice& value) noexcept {
   return list_db_->Push(key, value, true, kRight);
 }
 
-Status Merodis::RPush(const Slice& key, const std::vector<const Slice>& values) noexcept {
+Status Merodis::RPush(const Slice& key, const std::vector<Slice>& values) noexcept {
   return list_db_->Push(key, values, true, kRight);
 }
 
@@ -90,7 +90,7 @@ Status Merodis::RPushX(const Slice& key, const Slice& value) noexcept {
   return list_db_->Push(key, value, false, kRight);
 }
 
-Status Merodis::RPushX(const Slice& key, const std::vector<const Slice>& values) noexcept {
+Status Merodis::RPushX(const Slice& key, const std::vector<Slice>& values) noexcept {
   return list_db_->Push(key, values, false, kRight);
 }
 
