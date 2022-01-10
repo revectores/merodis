@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(merodis)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Build LevelDB's unit tests" FORCE)
 SET(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "Build LevelDB's benchmarks" FORCE)
@@ -28,6 +28,8 @@ target_sources(merodis PRIVATE
   db/redis_list.cc
   db/redis_list.h
   util/coding.h
+  util/sequence.h
+  util/sequence.cc
 )
 target_link_libraries(merodis leveldb)
 
@@ -39,6 +41,7 @@ if(MERODIS_BUILD_TESTS)
     tests/testutil.h
     tests/common.h
     tests/test.cc
+    tests/util_test.cc
     tests/coding_test.cc
     tests/string_test.cc
     tests/list_test.cc

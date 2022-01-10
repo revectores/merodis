@@ -57,6 +57,7 @@ public:
   Status RPop(const Slice& key, std::string* value) noexcept;
   Status RPop(const Slice& key, uint64_t count, std::vector<std::string>* values) noexcept;
   Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;
+  Status LRem(const Slice& key, int64_t count, const Slice& value, uint64_t* removedCount) noexcept;
   Status LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept;
 
 private:

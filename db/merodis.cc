@@ -106,6 +106,10 @@ Status Merodis::LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, co
   return list_db_->LInsert(key, beforeOrAfter, pivotValue, value);
 }
 
+Status Merodis::LRem(const Slice& key, int64_t count, const Slice& value, uint64_t* removedCount) noexcept {
+  return list_db_->LRem(key, count, value, removedCount);
+}
+
 Status Merodis::LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept {
   return list_db_->LMove(srcKey, dstKey, srcSide, dstSide, value);
 }

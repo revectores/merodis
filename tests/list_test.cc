@@ -69,6 +69,11 @@ public:
     EXPECT_MERODIS_OK(db.RPop(key, count, &values));
     return values;
   }
+  uint64_t LRem(const Slice& key, int64_t count, const Slice& value) {
+    uint64_t removedCount;
+    EXPECT_MERODIS_OK(db.LRem(key, count, value, &removedCount));
+    return removedCount;
+  }
   std::string LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide) {
     std::string value;
     EXPECT_MERODIS_OK(db.LMove(srcKey, dstKey, srcSide, dstSide, &value));
@@ -85,6 +90,7 @@ public:
   void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     LInsert(key_, beforeOrAfter, pivotValue, value);
   };
+  uint64_t LRem(int64_t count, const Slice& value) { return LRem(key_, count, value); }
   std::string LPop() { return LPop(key_); }
   std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); }
   std::string RPop() { return RPop(key_); }
@@ -212,6 +218,36 @@ TEST_F(ListTest, LINSERT) {
   ASSERT_EQ(List(), LIST("-1", "0", "0.5", "1", "1.5", "2", "3"));
   LPush("-2");
   ASSERT_EQ(List(), LIST("-2", "-1", "0", "0.5", "1", "1.5", "2", "3"));
+}
+
+TEST_F(ListTest, LREM) {
+  RPush({"1", "2", "1", "2", "1", "1", "1"});
+  ASSERT_EQ(List(), LIST("1", "2", "1", "2", "1", "1", "1"));
+
+  ASSERT_EQ(LRem(1, "1"), 1);
+  ASSERT_EQ(List(), LIST("2", "1", "2", "1", "1", "1"));
+
+  ASSERT_EQ(LRem(2, "1"), 2);
+  ASSERT_EQ(List(), LIST("2", "2", "1", "1"));
+
+  ASSERT_EQ(LRem(3, "1"), 2);
+  ASSERT_EQ(List(), LIST("2", "2"));
+
+  RPush({"1", "1", "1"});
+  LPush({"1", "1", "1"});
+  ASSERT_EQ(List(), LIST("1", "1", "1", "2", "2", "1", "1", "1"));
+
+  ASSERT_EQ(LRem(-2, "1"), 2);
+  ASSERT_EQ(List(), LIST("1", "1", "1", "2", "2", "1"));
+
+  ASSERT_EQ(LRem(-2, "1"), 2);
+  ASSERT_EQ(List(), LIST("1", "1", "2", "2"));
+
+  ASSERT_EQ(LRem(0, "2"), 2);
+  ASSERT_EQ(List(), LIST("1", "1"));
+
+  ASSERT_EQ(LRem(0, "1"), 2);
+  ASSERT_EQ(List(), LIST());
 }
 
 TEST_F(ListTest, LMOVE) {

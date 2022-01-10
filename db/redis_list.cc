@@ -10,6 +10,7 @@
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 #include "util/coding.h"
+#include "util/sequence.h"
 
 namespace merodis {
 
@@ -238,6 +239,66 @@ Status RedisList::LInsert(const Slice& key,
 
   delete iter;
   return Status::OK();
+}
+
+Status RedisList::LRem(const Slice &key,
+                       int64_t count,
+                       const Slice &value,
+                       uint64_t* removedCount) noexcept {
+  *removedCount = 0;
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+  ListMetaValue metaValue(rawListMetaValue);
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  uint64_t current;
+  ListNodeKey firstKey(key, metaValue.leftIndex);
+  ListNodeKey lastKey(key, metaValue.rightIndex);
+  WriteBatch updates;
+  std::vector<uint64_t> removedIndices;
+  removedIndices.reserve(abs(count));
+
+  if (count >= 0) {
+    for (iter->Seek(firstKey.Encode()), current = metaValue.leftIndex;
+         iter->Valid() && current <= metaValue.rightIndex;
+         iter->Next(), current++) {
+      if (iter->value().ToString() == value) {
+        removedIndices.push_back(current);
+        *removedCount += 1;
+        if (count > 0 && count - *removedCount == 0) break;
+      }
+    }
+  } else {
+    for (iter->Seek(lastKey.Encode()), current = metaValue.rightIndex;
+         iter->Valid() && current >= metaValue.leftIndex;
+         iter->Prev(), current--) {
+      if (iter->value().ToString() == value) {
+        removedIndices.push_back(current);
+        *removedCount += 1;
+        if (count + *removedCount == 0) break;
+      }
+    }
+    std::reverse(removedIndices.begin(), removedIndices.end());
+  }
+
+  const std::vector<Block> blocks = GetBlocks(metaValue.leftIndex, metaValue.rightIndex, removedIndices);
+  iter->SeekToFirst();
+  iter->Seek(firstKey.Encode());
+  for (Block block: blocks) {
+    current = block.start;
+    if (block.step == 0) continue;
+    for (iter->Seek(ListNodeKey(key, current).Encode());
+         current <= block.end;
+         current++, iter->Next()) {
+      ListNodeKey nodeKey(iter->key());
+      nodeKey.index += block.step;
+      updates.Put(nodeKey.Encode(), iter->value());
+    }
+  }
+  delete iter;
+  updates.Put(key, metaValue.Encode());
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisList::LMove(const Slice& srcKey,
