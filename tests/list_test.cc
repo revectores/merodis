@@ -69,6 +69,9 @@ public:
     EXPECT_MERODIS_OK(db.RPop(key, count, &values));
     return values;
   }
+  void LTrim(const Slice& key, int64_t from, int64_t to) {
+    EXPECT_MERODIS_OK(db.LTrim(key, from, to));
+  }
   uint64_t LRem(const Slice& key, int64_t count, const Slice& value) {
     uint64_t removedCount;
     EXPECT_MERODIS_OK(db.LRem(key, count, value, &removedCount));
@@ -87,14 +90,15 @@ public:
   void LPush(const std::vector<Slice>& values) { LPush(key_, values); }
   void RPush(const Slice& value) { RPush(key_, value); }
   void RPush(const std::vector<Slice>& values) { RPush(key_, values); }
-  void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
-    LInsert(key_, beforeOrAfter, pivotValue, value);
-  };
-  uint64_t LRem(int64_t count, const Slice& value) { return LRem(key_, count, value); }
   std::string LPop() { return LPop(key_); }
   std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); }
   std::string RPop() { return RPop(key_); }
   std::vector<std::string> RPop(uint64_t count) { return RPop(key_, count); }
+  void LTrim(int64_t from, int64_t to) { return LTrim(key_, from, to); }
+  void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
+    LInsert(key_, beforeOrAfter, pivotValue, value);
+  };
+  uint64_t LRem(int64_t count, const Slice& value) { return LRem(key_, count, value); }
   void SetKey(const Slice& key) { key_ = key; }
 
 private:
@@ -202,6 +206,59 @@ TEST_F(ListTest, RPOP_MULTIPLE) {
   ASSERT_MERODIS_OK(db.RPush("key", "value-0"));
   ASSERT_MERODIS_OK(db.RPush("key", "value-1"));
   ASSERT_EQ(List(), LIST("value-0", "value-1"));
+}
+
+TEST_F(ListTest, LTRIM) {
+  RPush({"0", "1", "2", "3", "4", "5", "6", "7"});
+  ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5", "6", "7"));
+  LTrim(1, 6);
+  ASSERT_EQ(List(), LIST("1", "2", "3", "4", "5", "6"));
+  LTrim(1, 5);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5", "6"));
+  LTrim(0, 3);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(0, 1024);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(2, 2);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(0, 0);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(1, 0);
+  ASSERT_EQ(List(), LIST());
+
+  RPush({"0", "1", "2", "3", "4", "5", "6", "7"});
+  ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5", "6", "7"));
+  LTrim(-7, -2);
+  ASSERT_EQ(List(), LIST("1", "2", "3", "4", "5", "6"));
+  LTrim(-5, -1);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5", "6"));
+  LTrim(-5, -2);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(-1025, -1);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(-2, -2);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(-1, -1);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(-3, -2);
+  ASSERT_EQ(List(), LIST());
+
+  RPush({"0", "1", "2", "3", "4", "5", "6", "7"});
+  ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5", "6", "7"));
+  LTrim(1, -2);
+  ASSERT_EQ(List(), LIST("1", "2", "3", "4", "5", "6"));
+  LTrim(-5, 5);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5", "6"));
+  LTrim(0, -2);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(-1025, 1024);
+  ASSERT_EQ(List(), LIST("2", "3", "4", "5"));
+  LTrim(2, -2);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(-1, 0);
+  ASSERT_EQ(List(), LIST("4"));
+  LTrim(1, -1);
+  ASSERT_EQ(List(), LIST());
 }
 
 TEST_F(ListTest, LINSERT) {

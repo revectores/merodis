@@ -102,6 +102,10 @@ Status Merodis::RPop(const Slice& key, uint64_t count, std::vector<std::string>*
   return list_db_->Pop(key, count, values, kRight);
 }
 
+Status Merodis::LTrim(const Slice& key, int64_t from, int64_t to) noexcept {
+  return list_db_->LTrim(key, from, to);
+}
+
 Status Merodis::LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept {
   return list_db_->LInsert(key, beforeOrAfter, pivotValue, value);
 }

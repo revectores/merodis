@@ -196,6 +196,20 @@ Status RedisList::Pop(const Slice& key,
   return Status::OK();
 }
 
+Status RedisList::LTrim(const Slice& key,
+                        int64_t from,
+                        int64_t to) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+  ListMetaValue metaValue(rawListMetaValue);
+
+  ListMetaValue sourceMetaValue = metaValue;
+  metaValue.leftIndex = std::max(sourceMetaValue.leftIndex, GetInternalIndex(from, sourceMetaValue));
+  metaValue.rightIndex = std::min(sourceMetaValue.rightIndex, GetInternalIndex(to, sourceMetaValue));
+  return db_->Put(WriteOptions(), key, metaValue.Encode());
+}
+
 Status RedisList::LInsert(const Slice& key,
                           const BeforeOrAfter& beforeOrAfter,
                           const Slice& pivotValue,
