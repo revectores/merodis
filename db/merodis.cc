@@ -6,25 +6,31 @@
 
 #include "redis_string.h"
 #include "redis_list.h"
+#include "redis_hash.h"
 
 namespace merodis {
 
 Merodis::Merodis() noexcept :
   string_db_(nullptr),
-  list_db_(nullptr) {}
+  list_db_(nullptr),
+  hash_db_(nullptr) {}
 
 Merodis::~Merodis() noexcept {
   delete string_db_;
   delete list_db_;
-};
+  delete hash_db_;
+}
 
 Status Merodis::Open(const Options& options, const std::string& db_path) noexcept {
   Status s;
   string_db_ = new RedisString;
   list_db_ = new RedisList;
+  hash_db_ = new RedisHash;
   s = string_db_->Open(options, db_path + "/string");
   if (!s.ok()) return s;
   s = list_db_->Open(options, db_path + "/list");
+  if (!s.ok()) return s;
+  s = hash_db_->Open(options, db_path + "/hash");
   return s;
 }
 

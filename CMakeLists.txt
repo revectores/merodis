@@ -27,6 +27,8 @@ target_sources(merodis PRIVATE
   db/redis_string.h
   db/redis_list.cc
   db/redis_list.h
+  db/redis_hash.cc
+  db/redis_hash.h
   util/coding.h
   util/sequence.h
   util/sequence.cc

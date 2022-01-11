@@ -29,6 +29,7 @@ using Iterator = leveldb::Iterator;
 
 class RedisString;
 class RedisList;
+class RedisHash;
 
 class Merodis {
 public:
@@ -68,6 +69,7 @@ public:
 private:
   RedisString* string_db_;
   RedisList* list_db_;
+  RedisHash* hash_db_;
 };
 
 }
