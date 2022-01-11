@@ -43,6 +43,7 @@ public:
   // List Operators
   Status LLen(const Slice& key, uint64_t* len) noexcept;
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
+  Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept;
   Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
   Status LPush(const Slice& key, const std::vector<Slice>& values) noexcept;

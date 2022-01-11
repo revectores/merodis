@@ -50,6 +50,11 @@ Status Merodis::LIndex(const Slice& key, int64_t index, std::string* value) noex
   return list_db_->LIndex(key, index, value);
 }
 
+Status Merodis::LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen,
+                     std::vector<uint64_t>& indices) noexcept {
+  return list_db_->LPos(key, value, rank, count, maxlen, indices);
+}
+
 Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string> *values) noexcept {
   return list_db_->LRange(key, from, to, values);
 }

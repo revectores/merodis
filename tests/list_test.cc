@@ -11,6 +11,8 @@ namespace test {
 
 #define LIST(...) \
   std::vector<std::string>({ __VA_ARGS__ })
+#define UINTS(...) \
+  std::vector<uint64_t>({ __VA_ARGS__ })
 
 class ListTest : public RedisTest {
 public:
@@ -25,6 +27,11 @@ public:
     std::string value;
     EXPECT_MERODIS_OK(db.LIndex(key, index, &value));
     return value;
+  }
+  std::vector<uint64_t> LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen) {
+    std::vector<uint64_t> indices;
+    EXPECT_MERODIS_OK(db.LPos(key, value, rank, count, maxlen, indices));
+    return indices;
   }
   std::vector<std::string> LRange(const Slice& key, int64_t from, int64_t to) {
     std::vector<std::string> values;
@@ -84,6 +91,9 @@ public:
   }
   uint64_t LLen() { return LLen(key_); }
   std::string LIndex(int64_t index) { return LIndex(key_, index); }
+  std::vector<uint64_t> LPos(const Slice& value, int64_t rank, int64_t count, int64_t maxlen) {
+    return LPos(key_, value, rank, count, maxlen);
+  }
   std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
   std::vector<std::string> List() { return List(key_); }
   void LPush(const Slice& value) { LPush(key_, value); }
@@ -122,6 +132,35 @@ TEST_F(ListTest, LINDEX) {
   ASSERT_EQ(LIndex(-2), "0");
   ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", 2, &value));
   ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", -3, &value));
+}
+
+TEST_F(ListTest, LPOS) {
+  RPush({"0", "1", "0", "0", "1", "0"});
+  ASSERT_EQ(List(), LIST("0", "1", "0", "0", "1", "0"));
+
+  ASSERT_EQ(LPos("0", 0, 0, 0), UINTS(0, 2, 3, 5));
+  ASSERT_EQ(LPos("0", 0, 1, 0), UINTS(0));
+  ASSERT_EQ(LPos("0", 0, 2, 0), UINTS(0, 2));
+  ASSERT_EQ(LPos("0", 0, 2, 1), UINTS(0));
+  ASSERT_EQ(LPos("0", 0, 2, 2), UINTS(0));
+
+  ASSERT_EQ(LPos("0", 1, 0, 0), UINTS(2, 3, 5));
+  ASSERT_EQ(LPos("0", 1, 1, 0), UINTS(2));
+  ASSERT_EQ(LPos("0", 1, 2, 0), UINTS(2, 3));
+  ASSERT_EQ(LPos("0", 1, 2, 2), UINTS());
+  ASSERT_EQ(LPos("0", 1, 2, 3), UINTS(2));
+
+  ASSERT_EQ(LPos("0", -1, 0, 0), UINTS(5, 3, 2, 0));
+  ASSERT_EQ(LPos("0", -1, 1, 0), UINTS(5));
+  ASSERT_EQ(LPos("0", -1, 2, 0), UINTS(5, 3));
+  ASSERT_EQ(LPos("0", -1, 2, 1), UINTS(5));
+  ASSERT_EQ(LPos("0", -1, 2, 2), UINTS(5));
+
+  ASSERT_EQ(LPos("0", -2, 0, 0), UINTS(3, 2, 0));
+  ASSERT_EQ(LPos("0", -2, 1, 0), UINTS(3));
+  ASSERT_EQ(LPos("0", -2, 2, 0), UINTS(3, 2));
+  ASSERT_EQ(LPos("0", -2, 2, 2), UINTS());
+  ASSERT_EQ(LPos("0", -2, 2, 3), UINTS(3));
 }
 
 TEST_F(ListTest, LRANGE) {

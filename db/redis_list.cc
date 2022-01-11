@@ -90,6 +90,58 @@ Status RedisList::LIndex(const Slice& key,
   return db_->Get(ReadOptions(), nodeKey.Encode(), value);
 }
 
+Status RedisList::LPos(const Slice& key,
+                       const Slice& value,
+                       int64_t rank,
+                       int64_t count,
+                       int64_t maxlen,
+                       std::vector<uint64_t>& indices) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+  ListMetaValue metaValue(rawListMetaValue);
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  uint64_t current;
+  uint64_t currentCount = 0;
+  indices.reserve(indices.size() + count);
+  if (rank >= 0) {
+    current = metaValue.leftIndex;
+    ListNodeKey firstKey(key, current);
+    uint64_t currentRank = 0;
+    for (iter->Seek(firstKey.Encode());
+         iter->Valid() && current <= metaValue.rightIndex && (maxlen == 0 || current - metaValue.leftIndex < maxlen);
+         iter->Next(), current++) {
+      if (iter->value().ToString() == value) {
+        if (currentRank >= rank) {
+          indices.push_back(current - metaValue.leftIndex);
+          currentCount += 1;
+          if (count && currentCount == count) break;
+        }
+        currentRank += 1;
+      }
+    }
+  } else {
+    current = metaValue.rightIndex;
+    ListNodeKey lastKey(key, current);
+    uint64_t currentRank = -1;
+    for (iter->Seek(lastKey.Encode());
+         iter->Valid() && current >= metaValue.leftIndex && (maxlen == 0 || metaValue.rightIndex - current < maxlen);
+         iter->Prev(), current--) {
+      if (iter->value().ToString() == value) {
+        if (currentRank <= rank) {
+          indices.push_back(current - metaValue.leftIndex);
+          currentCount += 1;
+          if (count && currentCount == count) break;
+        }
+        currentRank -= 1;
+      }
+    }
+  }
+  delete iter;
+  return Status::OK();
+}
+
 Status RedisList::LRange(const Slice& key,
                          int64_t from,
                          int64_t to,
