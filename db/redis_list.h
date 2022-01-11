@@ -30,7 +30,7 @@ struct ListNodeKey {
   explicit ListNodeKey(const Slice& rawValue) noexcept;
   ~ListNodeKey() noexcept = default;
 
-  Slice Encode() const;
+  std::string Encode() const;
 
   Slice key;
   uint64_t index;

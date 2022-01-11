@@ -47,11 +47,11 @@ ListNodeKey::ListNodeKey(const Slice& rawValue) noexcept :
   index = DecodeFixed64(rawValue.data() + rawValue.size() - sizeof(index));
 }
 
-Slice ListNodeKey::Encode() const {
-  char* rawListNodeKey = new char[key.size() + sizeof(index)];
-  memcpy(rawListNodeKey, key.data(), key.size());
-  EncodeFixed64(rawListNodeKey + key.size(), index);
-  return Slice{rawListNodeKey, key.size() + sizeof(index)};
+std::string ListNodeKey::Encode() const {
+  std::string rawListNodeKey(key.size() + sizeof(index), 0);
+  rawListNodeKey.replace(0, key.size(), key.data(), key.size());
+  EncodeFixed64(rawListNodeKey.data() + key.size(), index);
+  return rawListNodeKey;
 }
 
 RedisList::RedisList() noexcept = default;
