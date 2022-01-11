@@ -3,6 +3,9 @@
 #include "common.h"
 #include "testutil.h"
 
+#define KVS(...) \
+  (std::map<std::string, std::string>({ __VA_ARGS__ }))
+
 namespace merodis {
 namespace test {
 
@@ -19,6 +22,11 @@ public:
     EXPECT_MERODIS_OK(db.HGet(key, hashKey, &value));
     return value;
   }
+  std::map<std::string, std::string> HGetAll(const Slice& key) {
+    std::map<std::string, std::string> kvs;
+    EXPECT_MERODIS_OK(db.HGetAll(key, &kvs));
+    return kvs;
+  }
   bool HExists(const Slice& key, const Slice& hashKey) {
     bool exists;
     EXPECT_MERODIS_OK(db.HExists(key, hashKey, &exists));
@@ -30,6 +38,7 @@ public:
 
   uint64_t HLen() { return HLen(key_); }
   std::string HGet(const Slice& hashKey) { return HGet(key_, hashKey); }
+  std::map<std::string, std::string> HGetAll() { return HGetAll(key_); }
   bool HExists(const Slice& hashKey) { return HExists(key_, hashKey); }
   void HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
 
@@ -64,6 +73,16 @@ TEST_F(HashTest, HExists) {
   ASSERT_EQ(HExists("k0"), true);
   HSet("k0", "v1");
   ASSERT_EQ(HExists("k0"), true);
+}
+
+TEST_F(HashTest, HGetAll) {
+  ASSERT_EQ(HGetAll(), KVS());
+  HSet("k0", "v0");
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}));
+  HSet("k1", "v1");
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v1"}));
+  HSet("k1", "v2");
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v2"}));
 }
 
 }

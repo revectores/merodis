@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "leveldb/db.h"
 
@@ -69,6 +70,7 @@ public:
   // Hash Operators
   Status HLen(const Slice& key, uint64_t* len);
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
+  Status HGetAll(const Slice& key, std::map<std::string, std::string>* kvs);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
 

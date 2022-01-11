@@ -23,29 +23,30 @@ struct HashMetaValue {
 
 struct HashNodeKey {
   explicit HashNodeKey() noexcept = default;
-  explicit HashNodeKey(const Slice& key, const Slice& hashKey) noexcept {
-    data = new char[key.size() + 1 + hashKey.size()];
-    keySize = key.size();
-    hashKeySize = hashKey.size();
-    memcpy(data, key.data(), keySize);
-    data[keySize] = '\0';
-    memcpy(data + keySize + 1, hashKey.data(), hashKeySize);
+  explicit HashNodeKey(const Slice& key, const Slice& hashKey) noexcept :
+    keySize_(key.size()),
+    hashKeySize_(hashKey.size()),
+    data_(keySize_ + 1 + hashKeySize_, 0) {
+    memcpy(data_.data(), key.data(), keySize_);
+    data_[keySize_] = '\0';
+    memcpy(data_.data() + keySize_ + 1, hashKey.data(), hashKeySize_);
   };
-  explicit HashNodeKey(const Slice& rawHashNodeKey, size_t keySize_) noexcept {
-    data = const_cast<char*>(rawHashNodeKey.data());
-    keySize = keySize_;
-    hashKeySize = rawHashNodeKey.size() - keySize_ - 1;
+  explicit HashNodeKey(const Slice& rawHashNodeKey, size_t keySize_) noexcept :
+    keySize_(keySize_),
+    hashKeySize_(rawHashNodeKey.size() - keySize_ - 1),
+    data_(rawHashNodeKey.ToString()) {
   }
-  ~HashNodeKey() noexcept { delete[] data; }
+  ~HashNodeKey() noexcept = default;
 
-  size_t size() { return keySize + 1 + hashKeySize; }
-  Slice key() { return {data, keySize}; }
-  Slice hashKey() { return {data + keySize + 1, hashKeySize}; }
-  Slice Encode() { return {data, size()}; }
+  size_t size() { return data_.size(); }
+  Slice key() { return {data_.data(), keySize_}; }
+  Slice hashKey() { return {data_.data() + keySize_ + 1, hashKeySize_}; }
+  Slice Encode() { return data_; }
 
-  char* data;
-  size_t keySize;
-  size_t hashKeySize;
+private:
+  size_t keySize_;
+  size_t hashKeySize_;
+  std::string data_;
 };
 
 
@@ -57,10 +58,11 @@ public:
 
   Status Open(const Options& options, const std::string& db_path) noexcept final;
 
+  Status HLen(const Slice& key, uint64_t* len);
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
+  Status HGetAll(const Slice& key, std::map<std::string, std::string>* kvs);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
-  Status HLen(const Slice& key, uint64_t* len);
 };
 
 }
