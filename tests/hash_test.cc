@@ -19,12 +19,18 @@ public:
     EXPECT_MERODIS_OK(db.HGet(key, hashKey, &value));
     return value;
   }
+  bool HExists(const Slice& key, const Slice& hashKey) {
+    bool exists;
+    EXPECT_MERODIS_OK(db.HExists(key, hashKey, &exists));
+    return exists;
+  }
   void HSet(const Slice& key, const Slice& hashKey, const Slice& value) {
     EXPECT_MERODIS_OK(db.HSet(key, hashKey, value));
   }
 
   uint64_t HLen() { return HLen(key_); }
   std::string HGet(const Slice& hashKey) { return HGet(key_, hashKey); }
+  bool HExists(const Slice& hashKey) { return HExists(key_, hashKey); }
   void HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
 
 private:
@@ -50,6 +56,14 @@ TEST_F(HashTest, HLEN) {
   ASSERT_EQ(HLen(), 2);
   HSet("k1", "v2");
   ASSERT_EQ(HLen(), 2);
+}
+
+TEST_F(HashTest, HExists) {
+  ASSERT_EQ(HExists("k0"), false);
+  HSet("k0", "v0");
+  ASSERT_EQ(HExists("k0"), true);
+  HSet("k0", "v1");
+  ASSERT_EQ(HExists("k0"), true);
 }
 
 }

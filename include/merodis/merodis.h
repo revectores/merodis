@@ -69,6 +69,7 @@ public:
   // Hash Operators
   Status HLen(const Slice& key, uint64_t* len);
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
+  Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
 
 private:

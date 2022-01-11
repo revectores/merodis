@@ -58,6 +58,7 @@ public:
   Status Open(const Options& options, const std::string& db_path) noexcept final;
 
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
+  Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
   Status HLen(const Slice& key, uint64_t* len);
 };

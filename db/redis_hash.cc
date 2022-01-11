@@ -33,6 +33,18 @@ Status RedisHash::HGet(const Slice& key,
   return db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), value);
 }
 
+Status RedisHash::HExists(const Slice& key, const Slice& hashKey, bool* exists) {
+  std::string _;
+  Status s = db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), &_);
+  if (s.ok()) {
+    *exists = true;
+  } else if (s.IsNotFound()) {
+    *exists = false;
+    s = Status::OK();
+  }
+  return s;
+}
+
 Status RedisHash::HSet(const Slice& key,
                        const Slice& hashKey,
                        const Slice& value) {
