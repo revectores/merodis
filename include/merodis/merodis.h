@@ -66,6 +66,10 @@ public:
   Status LRem(const Slice& key, int64_t count, const Slice& value, uint64_t* removedCount) noexcept;
   Status LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept;
 
+  // Hash Operators
+  Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
+  Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
+
 private:
   RedisString* string_db_;
   RedisList* list_db_;

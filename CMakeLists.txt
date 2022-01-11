@@ -47,6 +47,7 @@ if(MERODIS_BUILD_TESTS)
     tests/coding_test.cc
     tests/string_test.cc
     tests/list_test.cc
+    tests/hash_test.cc
   )
   target_link_directories(test_merodis PRIVATE third_party/googletest)
   target_link_libraries(test_merodis merodis gmock gtest)

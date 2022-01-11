@@ -40,6 +40,7 @@ Status Merodis::DestroyDB(const std::string& db_path, Options options) noexcept 
   return leveldb::DestroyDB(db_path + "/list", options);
 }
 
+// String Operators
 Status Merodis::Get(const Slice& key, std::string* value) noexcept {
   return string_db_->Get(key, value);
 }
@@ -48,6 +49,7 @@ Status Merodis::Set(const Slice& key, const Slice& value) noexcept {
   return string_db_->Set(key, value);
 }
 
+// List Operators
 Status Merodis::LLen(const Slice& key, uint64_t* len) noexcept {
   return list_db_->LLen(key, len);
 }
@@ -131,6 +133,15 @@ Status Merodis::LRem(const Slice& key, int64_t count, const Slice& value, uint64
 
 Status Merodis::LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept {
   return list_db_->LMove(srcKey, dstKey, srcSide, dstSide, value);
+}
+
+// Hash Operators
+Status Merodis::HGet(const Slice& key, const Slice& hashKey, std::string* value) {
+  return hash_db_->HGet(key, hashKey, value);
+}
+
+Status Merodis::HSet(const Slice& key, const Slice& hashKey, const Slice& value) {
+  return hash_db_->HSet(key, hashKey, value);
 }
 
 }
