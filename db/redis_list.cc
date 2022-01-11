@@ -80,7 +80,7 @@ Status RedisList::LLen(const Slice& key,
 }
 
 Status RedisList::LIndex(const Slice& key,
-                         int64_t index,
+                         UserIndex index,
                          std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
@@ -148,8 +148,8 @@ Status RedisList::LPos(const Slice& key,
 }
 
 Status RedisList::LRange(const Slice& key,
-                         int64_t from,
-                         int64_t to,
+                         UserIndex from,
+                         UserIndex to,
                          std::vector<std::string>* values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
@@ -171,7 +171,7 @@ Status RedisList::LRange(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LSet(const Slice& key, int64_t index, const Slice& value) noexcept {
+Status RedisList::LSet(const Slice& key, UserIndex index, const Slice& value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -268,8 +268,8 @@ Status RedisList::Pop(const Slice& key,
 }
 
 Status RedisList::LTrim(const Slice& key,
-                        int64_t from,
-                        int64_t to) noexcept {
+                        UserIndex from,
+                        UserIndex to) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;

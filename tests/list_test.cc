@@ -23,7 +23,7 @@ public:
     db.LLen(key, &len);
     return len;
   }
-  std::string LIndex(const Slice& key, int64_t index) {
+  std::string LIndex(const Slice& key, UserIndex index) {
     std::string value;
     EXPECT_MERODIS_OK(db.LIndex(key, index, &value));
     return value;
@@ -33,7 +33,7 @@ public:
     EXPECT_MERODIS_OK(db.LPos(key, value, rank, count, maxlen, indices));
     return indices;
   }
-  std::vector<std::string> LRange(const Slice& key, int64_t from, int64_t to) {
+  std::vector<std::string> LRange(const Slice& key, UserIndex from, UserIndex to) {
     std::vector<std::string> values;
     EXPECT_MERODIS_OK(db.LRange(key, from, to, &values));
     return values;
@@ -41,7 +41,7 @@ public:
   std::vector<std::string> List(const Slice& key) {
     return LRange(key, 0, -1);
   }
-  void LSet(const Slice& key, int64_t index, const Slice& value) {
+  void LSet(const Slice& key, UserIndex index, const Slice& value) {
     EXPECT_MERODIS_OK(db.LSet(key, index, value));
   }
   void LPush(const Slice& key, const Slice& value) {
@@ -79,7 +79,7 @@ public:
     EXPECT_MERODIS_OK(db.RPop(key, count, &values));
     return values;
   }
-  void LTrim(const Slice& key, int64_t from, int64_t to) {
+  void LTrim(const Slice& key, UserIndex from, UserIndex to) {
     EXPECT_MERODIS_OK(db.LTrim(key, from, to));
   }
   uint64_t LRem(const Slice& key, int64_t count, const Slice& value) {
@@ -93,13 +93,13 @@ public:
     return value;
   }
   uint64_t LLen() { return LLen(key_); }
-  std::string LIndex(int64_t index) { return LIndex(key_, index); }
+  std::string LIndex(UserIndex index) { return LIndex(key_, index); }
   std::vector<uint64_t> LPos(const Slice& value, int64_t rank, int64_t count, int64_t maxlen) {
     return LPos(key_, value, rank, count, maxlen);
   }
-  std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
+  std::vector<std::string> LRange(UserIndex from, UserIndex to) { return LRange(key_, from, to); }
   std::vector<std::string> List() { return List(key_); }
-  void LSet(int64_t index, const Slice& value) { LSet(key_, index, value); }
+  void LSet(UserIndex index, const Slice& value) { LSet(key_, index, value); }
   void LPush(const Slice& value) { LPush(key_, value); }
   void LPush(const std::vector<Slice>& values) { LPush(key_, values); }
   void RPush(const Slice& value) { RPush(key_, value); }
@@ -108,7 +108,7 @@ public:
   std::vector<std::string> LPop(uint64_t count) { return LPop(key_, count); }
   std::string RPop() { return RPop(key_); }
   std::vector<std::string> RPop(uint64_t count) { return RPop(key_, count); }
-  void LTrim(int64_t from, int64_t to) { return LTrim(key_, from, to); }
+  void LTrim(UserIndex from, UserIndex to) { return LTrim(key_, from, to); }
   void LInsert(const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) {
     LInsert(key_, beforeOrAfter, pivotValue, value);
   };

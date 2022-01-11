@@ -6,7 +6,6 @@
 
 namespace merodis {
 
-typedef int64_t UserIndex;
 typedef uint64_t InternalIndex;
 
 typedef Slice ListMetaKey;
@@ -47,15 +46,15 @@ public:
 
   Status Open(const Options& options, const std::string& db_path) noexcept final;
   Status LLen(const Slice& key, uint64_t* len) noexcept;
-  Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
+  Status LIndex(const Slice& key, UserIndex index, std::string* value) noexcept;
   Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept;
-  Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
-  Status LSet(const Slice& key, int64_t index, const Slice& value) noexcept;
+  Status LRange(const Slice& key, UserIndex from, UserIndex to, std::vector<std::string>* values) noexcept;
+  Status LSet(const Slice& key, UserIndex index, const Slice& value) noexcept;
   Status Push(const Slice& key, const Slice& value, bool createListIfNotFound, enum Side side) noexcept;
   Status Push(const Slice& key, const std::vector<Slice>& values, bool createListIfNotFound, enum Side side) noexcept;
   Status Pop(const Slice& key, std::string* value, enum Side side) noexcept;
   Status Pop(const Slice& key, uint64_t count, std::vector<std::string>* values, enum Side side) noexcept;
-  Status LTrim(const Slice& key, int64_t from, int64_t to) noexcept;
+  Status LTrim(const Slice& key, UserIndex from, UserIndex to) noexcept;
   Status LInsert(const Slice& key, const BeforeOrAfter& beforeOrAfter, const Slice& pivotValue, const Slice& value) noexcept;
   Status LRem(const Slice& key, int64_t count, const Slice& value, uint64_t* removedCount) noexcept;
   Status LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept;

@@ -46,7 +46,7 @@ Status Merodis::LLen(const Slice& key, uint64_t* len) noexcept {
   return list_db_->LLen(key, len);
 }
 
-Status Merodis::LIndex(const Slice& key, int64_t index, std::string* value) noexcept {
+Status Merodis::LIndex(const Slice& key, UserIndex index, std::string* value) noexcept {
   return list_db_->LIndex(key, index, value);
 }
 
@@ -55,11 +55,11 @@ Status Merodis::LPos(const Slice& key, const Slice& value, int64_t rank, int64_t
   return list_db_->LPos(key, value, rank, count, maxlen, indices);
 }
 
-Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
+Status Merodis::LRange(const Slice& key, UserIndex from, UserIndex to, std::vector<std::string>* values) noexcept {
   return list_db_->LRange(key, from, to, values);
 }
 
-Status Merodis::LSet(const Slice& key, int64_t index, const Slice& value) noexcept {
+Status Merodis::LSet(const Slice& key, UserIndex index, const Slice& value) noexcept {
   return list_db_->LSet(key, index, value);
 }
 
@@ -111,7 +111,7 @@ Status Merodis::RPop(const Slice& key, uint64_t count, std::vector<std::string>*
   return list_db_->Pop(key, count, values, kRight);
 }
 
-Status Merodis::LTrim(const Slice& key, int64_t from, int64_t to) noexcept {
+Status Merodis::LTrim(const Slice& key, UserIndex from, UserIndex to) noexcept {
   return list_db_->LTrim(key, from, to);
 }
 
