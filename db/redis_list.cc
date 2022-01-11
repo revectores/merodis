@@ -174,7 +174,7 @@ Status RedisList::LSet(const Slice& key, int64_t index, const Slice& value) noex
 
   InternalIndex internalIndex = GetInternalIndex(index, metaValue);
   if (!IsValidInternalIndex(internalIndex, metaValue)) {
-    Status::InvalidArgument("Index out of range");
+    return Status::InvalidArgument("Index out of range");
   }
   return db_->Put(WriteOptions(), ListNodeKey(key, internalIndex).Encode(), value);
 }

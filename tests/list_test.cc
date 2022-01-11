@@ -134,8 +134,8 @@ TEST_F(ListTest, LINDEX) {
   ASSERT_EQ(LIndex(1), "1");
   ASSERT_EQ(LIndex(-1), "1");
   ASSERT_EQ(LIndex(-2), "0");
-  ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", 2, &value));
-  ASSERT_MERODIS_ISNOTFOUND(db.LIndex("key", -3, &value));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.LIndex("key", 2, &value));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.LIndex("key", -3, &value));
 }
 
 TEST_F(ListTest, LPOS) {
@@ -189,6 +189,8 @@ TEST_F(ListTest, LSET) {
   LSet(-2, "another one");
   ASSERT_EQ(LIndex(-2), "another one");
   ASSERT_EQ(List(), LIST("zero", "another one", "two"));
+  ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LSet("key", 3, "out of range"));
+  ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LSet("key", -4, "out of range"));
 }
 
 TEST_F(ListTest, PUSH) {
@@ -202,10 +204,10 @@ TEST_F(ListTest, PUSH) {
   RPush({"4", "5"});
   ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5"));
 
-  ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", "0"));
-  ASSERT_MERODIS_ISNOTFOUND(db.LPushX("no-such-key", {"0", "1"}));
-  ASSERT_MERODIS_ISNOTFOUND(db.RPushX("no-such-key", "0"));
-  ASSERT_MERODIS_ISNOTFOUND(db.RPushX("no-such-key", {"0", "1"}));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.LPushX("no-such-key", "0"));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.LPushX("no-such-key", {"0", "1"}));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.RPushX("no-such-key", "0"));
+  ASSERT_MERODIS_IS_NOT_FOUND(db.RPushX("no-such-key", {"0", "1"}));
 }
 
 TEST_F(ListTest, LPOP_SINGLE) {
