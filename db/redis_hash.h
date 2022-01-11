@@ -14,22 +14,23 @@ struct HashMetaValue {
 struct HashNodeKey {
   explicit HashNodeKey() noexcept = default;
   explicit HashNodeKey(const Slice& key, const Slice& hashKey) noexcept {
-    data = new char[key.size() + hashKey.size()];
+    data = new char[key.size() + 1 + hashKey.size()];
     keySize = key.size();
     hashKeySize = hashKey.size();
     memcpy(data, key.data(), keySize);
-    memcpy(data + keySize, hashKey.data(), hashKeySize);
+    data[keySize] = '\0';
+    memcpy(data + keySize + 1, hashKey.data(), hashKeySize);
   };
   explicit HashNodeKey(const Slice& rawHashNodeKey, size_t keySize_) noexcept {
     data = const_cast<char*>(rawHashNodeKey.data());
     keySize = keySize_;
-    hashKeySize = rawHashNodeKey.size() - keySize_;
+    hashKeySize = rawHashNodeKey.size() - keySize_ - 1;
   }
   ~HashNodeKey() noexcept { delete[] data; }
 
-  size_t size() { return keySize + hashKeySize; }
+  size_t size() { return keySize + 1 + hashKeySize; }
   Slice key() { return {data, keySize}; }
-  Slice hashKey() { return {data + keySize, hashKeySize}; }
+  Slice hashKey() { return {data + keySize + 1, hashKeySize}; }
   Slice Encode() { return {data, size()}; }
 
   char* data;
