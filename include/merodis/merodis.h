@@ -67,6 +67,7 @@ public:
   Status LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept;
 
   // Hash Operators
+  Status HLen(const Slice& key, uint64_t* len);
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
 

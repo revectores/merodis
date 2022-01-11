@@ -10,6 +10,10 @@
 
 namespace merodis {
 
+static const std::vector<std::string> databases {
+  "string", "list", "hash"
+};
+
 Merodis::Merodis() noexcept :
   string_db_(nullptr),
   list_db_(nullptr),
@@ -26,18 +30,23 @@ Status Merodis::Open(const Options& options, const std::string& db_path) noexcep
   string_db_ = new RedisString;
   list_db_ = new RedisList;
   hash_db_ = new RedisHash;
-  s = string_db_->Open(options, db_path + "/string");
-  if (!s.ok()) return s;
-  s = list_db_->Open(options, db_path + "/list");
-  if (!s.ok()) return s;
-  s = hash_db_->Open(options, db_path + "/hash");
+  Redis* dbs_[] = {string_db_, list_db_, hash_db_};
+  std::string db_home(db_path + "/");
+  for (int c = 0; c < databases.size(); c++) {
+    s = dbs_[c]->Open(options, db_home + databases[c]);
+    if (!s.ok()) return s;
+  }
   return s;
 }
 
 Status Merodis::DestroyDB(const std::string& db_path, Options options) noexcept {
-  Status s = leveldb::DestroyDB(db_path + "/string", options);
-  if (!s.ok()) return s;
-  return leveldb::DestroyDB(db_path + "/list", options);
+  Status s;
+  std::string db_home(db_path + "/");
+  for (const auto& db_name: databases) {
+    s = leveldb::DestroyDB(db_home + db_name, options);
+    if (!s.ok()) return s;
+  }
+  return s;
 }
 
 // String Operators
@@ -136,6 +145,10 @@ Status Merodis::LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSid
 }
 
 // Hash Operators
+Status Merodis::HLen(const Slice& key, uint64_t* len) {
+  return hash_db_->HLen(key, len);
+}
+
 Status Merodis::HGet(const Slice& key, const Slice& hashKey, std::string* value) {
   return hash_db_->HGet(key, hashKey, value);
 }

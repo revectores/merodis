@@ -2,11 +2,21 @@
 #define MERODIS_REDIS_HASH_H
 
 #include "redis.h"
+#include "util/coding.h"
 
 namespace merodis {
 
 struct HashMetaValue {
-  explicit HashMetaValue() noexcept = default;
+  explicit HashMetaValue() noexcept : len(0) {};
+  explicit HashMetaValue(const std::string& rawValue) noexcept {
+    len = DecodeFixed64(rawValue.data());
+  };
+  ~HashMetaValue() noexcept = default;
+  std::string Encode() noexcept {
+    std::string rawValue(sizeof(int64_t), 0);
+    EncodeFixed64(rawValue.data(), len);
+    return rawValue;
+  }
 
   uint64_t len;
 };
@@ -49,6 +59,7 @@ public:
 
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
+  Status HLen(const Slice& key, uint64_t* len);
 };
 
 }
