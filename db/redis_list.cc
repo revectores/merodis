@@ -166,6 +166,19 @@ Status RedisList::LRange(const Slice& key,
   return Status::OK();
 }
 
+Status RedisList::LSet(const Slice& key, int64_t index, const Slice& value) noexcept {
+  std::string rawListMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
+  if (!s.ok()) return s;
+  ListMetaValue metaValue(rawListMetaValue);
+
+  InternalIndex internalIndex = GetInternalIndex(index, metaValue);
+  if (!IsValidInternalIndex(internalIndex, metaValue)) {
+    Status::InvalidArgument("Index out of range");
+  }
+  return db_->Put(WriteOptions(), ListNodeKey(key, internalIndex).Encode(), value);
+}
+
 Status RedisList::Push(const Slice& key,
                        const Slice& value,
                        bool createListIfNotFound,
@@ -399,8 +412,12 @@ Status RedisList::LMove(const Slice& srcKey,
   return db_->Write(WriteOptions(), &updates);
 }
 
-inline uint64_t RedisList::GetInternalIndex(int64_t userIndex, ListMetaValue metaValue) noexcept {
+inline InternalIndex RedisList::GetInternalIndex(UserIndex userIndex, ListMetaValue metaValue) noexcept {
   return userIndex >= 0 ? metaValue.leftIndex + userIndex : metaValue.rightIndex + userIndex + 1;
+}
+
+inline bool RedisList::IsValidInternalIndex(InternalIndex internalIndex, ListMetaValue metaValue) noexcept {
+  return metaValue.leftIndex <= internalIndex && internalIndex <= metaValue.rightIndex;
 }
 
 }

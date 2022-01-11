@@ -55,8 +55,12 @@ Status Merodis::LPos(const Slice& key, const Slice& value, int64_t rank, int64_t
   return list_db_->LPos(key, value, rank, count, maxlen, indices);
 }
 
-Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string> *values) noexcept {
+Status Merodis::LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept {
   return list_db_->LRange(key, from, to, values);
+}
+
+Status Merodis::LSet(const Slice& key, int64_t index, const Slice& value) noexcept {
+  return list_db_->LSet(key, index, value);
 }
 
 Status Merodis::LPush(const Slice& key, const Slice& value) noexcept {

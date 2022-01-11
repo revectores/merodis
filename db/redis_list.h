@@ -6,6 +6,9 @@
 
 namespace merodis {
 
+typedef int64_t UserIndex;
+typedef uint64_t InternalIndex;
+
 typedef Slice ListMetaKey;
 
 struct ListMetaValue {
@@ -24,7 +27,7 @@ struct ListMetaValue {
 };
 
 struct ListNodeKey {
-  explicit ListNodeKey(Slice key, uint64_t index) noexcept;
+  explicit ListNodeKey(Slice key, InternalIndex index) noexcept;
   explicit ListNodeKey(const Slice& rawValue) noexcept;
   ~ListNodeKey() noexcept = default;
 
@@ -47,6 +50,7 @@ public:
   Status LIndex(const Slice& key, int64_t index, std::string* value) noexcept;
   Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept;
   Status LRange(const Slice& key, int64_t from, int64_t to, std::vector<std::string>* values) noexcept;
+  Status LSet(const Slice& key, int64_t index, const Slice& value) noexcept;
   Status Push(const Slice& key, const Slice& value, bool createListIfNotFound, enum Side side) noexcept;
   Status Push(const Slice& key, const std::vector<Slice>& values, bool createListIfNotFound, enum Side side) noexcept;
   Status Pop(const Slice& key, std::string* value, enum Side side) noexcept;
@@ -57,7 +61,8 @@ public:
   Status LMove(const Slice& srcKey, const Slice& dstKey, enum Side srcSide, enum Side dstSide, std::string* value) noexcept;
 
 private:
-  static inline uint64_t GetInternalIndex(int64_t userIndex, ListMetaValue meta) noexcept;
+  static inline InternalIndex GetInternalIndex(UserIndex userIndex, ListMetaValue meta) noexcept;
+  static inline bool IsValidInternalIndex(InternalIndex internalIndex, ListMetaValue meta) noexcept;
 };
 
 }

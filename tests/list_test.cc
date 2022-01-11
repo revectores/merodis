@@ -41,6 +41,9 @@ public:
   std::vector<std::string> List(const Slice& key) {
     return LRange(key, 0, -1);
   }
+  void LSet(const Slice& key, int64_t index, const Slice& value) {
+    EXPECT_MERODIS_OK(db.LSet(key, index, value));
+  }
   void LPush(const Slice& key, const Slice& value) {
     EXPECT_MERODIS_OK(db.LPush(key, value));
   }
@@ -96,6 +99,7 @@ public:
   }
   std::vector<std::string> LRange(int64_t from, int64_t to) { return LRange(key_, from, to); }
   std::vector<std::string> List() { return List(key_); }
+  void LSet(int64_t index, const Slice& value) { LSet(key_, index, value); }
   void LPush(const Slice& value) { LPush(key_, value); }
   void LPush(const std::vector<Slice>& values) { LPush(key_, values); }
   void RPush(const Slice& value) { RPush(key_, value); }
@@ -171,6 +175,20 @@ TEST_F(ListTest, LRANGE) {
   ASSERT_EQ(LRange(-100, 100), LIST("0", "1", "2"));
   ASSERT_EQ(LRange(5, 10), LIST());
   ASSERT_EQ(LRange(-3, -6), LIST());
+}
+
+TEST_F(ListTest, LSET) {
+  RPush({"0", "1", "2"});
+  ASSERT_EQ(List(), LIST("0", "1", "2"));
+  LSet(0, "zero");
+  ASSERT_EQ(LIndex(0), "zero");
+  LSet(1, "one");
+  ASSERT_EQ(LIndex(1), "one");
+  LSet(-1, "two");
+  ASSERT_EQ(LIndex(-1), "two");
+  LSet(-2, "another one");
+  ASSERT_EQ(LIndex(-2), "another one");
+  ASSERT_EQ(List(), LIST("zero", "another one", "two"));
 }
 
 TEST_F(ListTest, PUSH) {
