@@ -134,8 +134,8 @@ TEST_F(ListTest, LINDEX) {
   ASSERT_EQ(LIndex(1), "1");
   ASSERT_EQ(LIndex(-1), "1");
   ASSERT_EQ(LIndex(-2), "0");
-  ASSERT_MERODIS_IS_NOT_FOUND(db.LIndex("key", 2, &value));
-  ASSERT_MERODIS_IS_NOT_FOUND(db.LIndex("key", -3, &value));
+  ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LIndex("key", 2, &value));
+  ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LIndex("key", -3, &value));
 }
 
 TEST_F(ListTest, LPOS) {

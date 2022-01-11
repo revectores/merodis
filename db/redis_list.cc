@@ -86,7 +86,12 @@ Status RedisList::LIndex(const Slice& key,
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
   ListMetaValue metaValue(rawListMetaValue);
-  ListNodeKey nodeKey(key, GetInternalIndex(index, metaValue));
+
+  InternalIndex internalIndex = GetInternalIndex(index, metaValue);
+  if (!IsValidInternalIndex(internalIndex, metaValue)) {
+    return Status::InvalidArgument("Index out of range");
+  }
+  ListNodeKey nodeKey(key, internalIndex);
   return db_->Get(ReadOptions(), nodeKey.Encode(), value);
 }
 
@@ -176,7 +181,8 @@ Status RedisList::LSet(const Slice& key, int64_t index, const Slice& value) noex
   if (!IsValidInternalIndex(internalIndex, metaValue)) {
     return Status::InvalidArgument("Index out of range");
   }
-  return db_->Put(WriteOptions(), ListNodeKey(key, internalIndex).Encode(), value);
+  ListNodeKey nodeKey(key, internalIndex);
+  return db_->Put(WriteOptions(), nodeKey.Encode(), value);
 }
 
 Status RedisList::Push(const Slice& key,
