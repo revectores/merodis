@@ -98,7 +98,8 @@ Status RedisHash::HExists(const Slice &key, const Slice &hashKey, bool *exists) 
 
 Status RedisHash::HSet(const Slice& key,
                        const Slice& hashKey,
-                       const Slice& value) {
+                       const Slice& value,
+                       uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -108,7 +109,8 @@ Status RedisHash::HSet(const Slice& key,
   HashNodeKey nodeKey(key, hashKey);
   updates.Put(nodeKey.Encode(), value);
 
-  if (!CountKeysIntersection(key, nodeKey)) {
+  *count = 1 - CountKeysIntersection(key, nodeKey);
+  if (*count) {
     metaValue.len += 1;
     updates.Put(key, metaValue.Encode());
   }
@@ -138,7 +140,8 @@ Status RedisHash::HSet(const Slice& key,
 }
 
 Status RedisHash::HDel(const Slice &key,
-                       const Slice &hashKey) {
+                       const Slice &hashKey,
+                       uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -148,7 +151,8 @@ Status RedisHash::HDel(const Slice &key,
   HashNodeKey nodeKey(key, hashKey);
   updates.Delete(nodeKey.Encode());
 
-  if (CountKeysIntersection(key, nodeKey)) {
+  *count = CountKeysIntersection(key, nodeKey);
+  if (*count) {
     metaValue.len -= 1;
     updates.Put(key, metaValue.Encode());
   }

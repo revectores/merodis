@@ -39,19 +39,23 @@ public:
     EXPECT_MERODIS_OK(db.HExists(key, hashKey, &exists));
     return exists;
   }
-  void HSet(const Slice& key, const Slice& hashKey, const Slice& value) {
-    EXPECT_MERODIS_OK(db.HSet(key, hashKey, value));
+  uint64_t HSet(const Slice& key, const Slice& hashKey, const Slice& value) {
+    uint64_t count = 0;
+    EXPECT_MERODIS_OK(db.HSet(key, hashKey, value, &count));
+    return count;
   }
   uint64_t HSet(const Slice& key, const std::map<std::string, std::string>& kvs) {
     uint64_t count = 0;
     EXPECT_MERODIS_OK(db.HSet(key, kvs, &count));
     return count;
   }
-  void HDel(const Slice& key, const Slice& hashKey) {
-    EXPECT_MERODIS_OK(db.HDel(key, hashKey));
+  uint64_t HDel(const Slice& key, const Slice& hashKey) {
+    uint64_t count = 0;
+    EXPECT_MERODIS_OK(db.HDel(key, hashKey, &count));
+    return count;
   }
   uint64_t HDel(const Slice& key, const std::set<std::string>& hashKeys) {
-    uint64_t count;
+    uint64_t count = 0;
     EXPECT_MERODIS_OK(db.HDel(key, hashKeys, &count));
     return count;
   }
@@ -62,9 +66,9 @@ public:
   std::vector<std::string> HKeys() { return HKeys(key_); }
   std::vector<std::string> HVals() { return HVals(key_); }
   bool HExists(const Slice& hashKey) { return HExists(key_, hashKey); }
-  void HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
+  uint64_t HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
   uint64_t HSet(const std::map<std::string, std::string>& kvs) { return HSet(key_, kvs); }
-  void HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
+  uint64_t HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
   uint64_t HDel(const std::set<std::string>& hashKeys) { return HDel(key_, hashKeys); };
 
 private:
@@ -72,7 +76,7 @@ private:
 };
 
 TEST_F(HashTest, HSET) {
-  HSet("k0", "v0");
+  ASSERT_EQ(HSet("k0", "v0"), 1);
   ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}));
   ASSERT_EQ(HSet({{"k1", "v1"}}), 1);
   ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v1"}));
@@ -82,8 +86,8 @@ TEST_F(HashTest, HSET) {
   ASSERT_EQ(HGetAll(), KVS({"k0", "vx"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "vx"}));
   ASSERT_EQ(HSet({{"k#", "v#"}, {"k1", "vx"}, {"k2", "vx"}, {"k4", "v4"}}), 2);
   ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k0", "vx"}, {"k1", "vx"}, {"k2", "vx"}, {"k3", "vx"}, {"k4", "v4"}));
-  HDel("k0");
-  HDel("k3");
+  ASSERT_EQ(HDel("k0"), 1);
+  ASSERT_EQ(HDel("k3"), 1);
   ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k1", "vx"}, {"k2", "vx"}, {"k4", "v4"}));
   ASSERT_EQ(HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}}), 2);
   ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}, {"k4", "v4"}));
@@ -141,7 +145,7 @@ TEST_F(HashTest, HDel) {
   HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}});
   ASSERT_EQ(HLen(), 4);
   ASSERT_EQ(HKeys(), LIST("k0", "k1", "k2", "k3"));
-  HDel("k3");
+  ASSERT_EQ(HDel("k3"), 1);
   ASSERT_EQ(HLen(), 3);
   ASSERT_EQ(HKeys(), LIST("k0", "k1", "k2"));
   ASSERT_EQ(HDel({"k2", "k3"}), 1);
