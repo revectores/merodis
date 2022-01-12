@@ -78,6 +78,7 @@ public:
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
   Status HSet(const Slice& key, const std::map<std::string, std::string>& kvs, uint64_t* count);
   Status HDel(const Slice& key, const Slice& hashKey);
+  Status HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count);
 
 private:
   RedisString* string_db_;

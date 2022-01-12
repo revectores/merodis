@@ -181,4 +181,8 @@ Status Merodis::HDel(const Slice& key, const Slice& hashKey) {
   return hash_db_->HDel(key, hashKey);
 }
 
+Status Merodis::HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count) {
+  return hash_db_->HDel(key, hashKeys, count);
+}
+
 }

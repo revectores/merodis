@@ -50,6 +50,11 @@ public:
   void HDel(const Slice& key, const Slice& hashKey) {
     EXPECT_MERODIS_OK(db.HDel(key, hashKey));
   }
+  uint64_t HDel(const Slice& key, const std::set<std::string>& hashKeys) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.HDel(key, hashKeys, &count));
+    return count;
+  }
 
   uint64_t HLen() { return HLen(key_); }
   std::string HGet(const Slice& hashKey) { return HGet(key_, hashKey); }
@@ -60,6 +65,7 @@ public:
   void HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
   uint64_t HSet(const std::map<std::string, std::string>& kvs) { return HSet(key_, kvs); }
   void HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
+  uint64_t HDel(const std::set<std::string>& hashKeys) { return HDel(key_, hashKeys); };
 
 private:
   Slice key_;
@@ -132,16 +138,20 @@ TEST_F(HashTest, HVals) {
 }
 
 TEST_F(HashTest, HDel) {
-  HSet("k0", "v0");
-  HSet("k1", "v1");
+  HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}});
+  ASSERT_EQ(HLen(), 4);
+  ASSERT_EQ(HKeys(), LIST("k0", "k1", "k2", "k3"));
+  HDel("k3");
+  ASSERT_EQ(HLen(), 3);
+  ASSERT_EQ(HKeys(), LIST("k0", "k1", "k2"));
+  ASSERT_EQ(HDel({"k2", "k3"}), 1);
+  ASSERT_EQ(HLen(), 2);
   ASSERT_EQ(HKeys(), LIST("k0", "k1"));
-  HDel("k1");
-  ASSERT_EQ(HKeys(), LIST("k0"));
-  HDel("k0");
-  ASSERT_EQ(HKeys(), LIST());
-  HSet("k0", "v1");
-  ASSERT_EQ(HKeys(), LIST("k0"));
-  HDel("k0");
+  ASSERT_EQ(HDel({"k2", "k3"}), 0);
+  ASSERT_EQ(HLen(), 2);
+  ASSERT_EQ(HKeys(), LIST("k0", "k1"));
+  ASSERT_EQ(HDel({"k0", "k1"}), 2);
+  ASSERT_EQ(HLen(), 0);
   ASSERT_EQ(HKeys(), LIST());
 }
 

@@ -96,23 +96,22 @@ Status RedisHash::HExists(const Slice &key, const Slice &hashKey, bool *exists) 
   return s;
 }
 
-Status RedisHash::HSet(const Slice &key,
-                       const Slice &hashKey,
-                       const Slice &value) {
+Status RedisHash::HSet(const Slice& key,
+                       const Slice& hashKey,
+                       const Slice& value) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
   if (s.ok()) metaValue = HashMetaValue(rawHashMetaValue);
-  WriteBatch updates;
 
-  std::string _;
+  WriteBatch updates;
   HashNodeKey nodeKey(key, hashKey);
-  s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
-  if (!s.ok()) {
+  updates.Put(nodeKey.Encode(), value);
+
+  if (!CountKeysIntersection(key, nodeKey)) {
     metaValue.len += 1;
     updates.Put(key, metaValue.Encode());
   }
-  updates.Put(nodeKey.Encode(), value);
   return db_->Write(WriteOptions(), &updates);
 }
 
@@ -130,7 +129,7 @@ Status RedisHash::HSet(const Slice& key,
     updates.Put(nodeKey.Encode(), v);
   }
 
-  *count = kvs.size() - CountKeysIntersection(key, kvs);
+  *count = kvs.size() - (metaValue.len ? CountKeysIntersection(key, kvs) : 0);
   if (*count) {
     metaValue.len += *count;
     updates.Put(key, metaValue.Encode());
@@ -140,8 +139,71 @@ Status RedisHash::HSet(const Slice& key,
 
 Status RedisHash::HDel(const Slice &key,
                        const Slice &hashKey) {
+  std::string rawHashMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
+  HashMetaValue metaValue;
+  if (s.ok()) metaValue = HashMetaValue(rawHashMetaValue);
+
+  WriteBatch updates;
   HashNodeKey nodeKey(key, hashKey);
-  return db_->Delete(WriteOptions(), nodeKey.Encode());
+  updates.Delete(nodeKey.Encode());
+
+  if (CountKeysIntersection(key, nodeKey)) {
+    metaValue.len -= 1;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
+}
+
+Status RedisHash::HDel(const Slice& key,
+                       const std::set<std::string>& hashKeys,
+                       uint64_t* count) {
+  std::string rawHashMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
+  HashMetaValue metaValue;
+  if (s.ok()) metaValue = HashMetaValue(rawHashMetaValue);
+  WriteBatch updates;
+
+  for (const auto& k: hashKeys) {
+    HashNodeKey nodeKey(key, k);
+    updates.Delete(nodeKey.Encode());
+  }
+
+  *count = metaValue.len ? CountKeysIntersection(key, hashKeys) : 0;
+  if (*count) {
+    metaValue.len -= *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
+}
+
+uint64_t RedisHash::CountKeysIntersection(const Slice& key, const HashNodeKey& nodeKey) {
+  std::string _;
+  Status s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
+  return s.ok();
+}
+
+uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<std::string>& hashKeys) {
+  uint64_t count = 0;
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  iter->Next();
+  std::set<std::string>::const_iterator updatesIter = hashKeys.cbegin();
+  while (iter->Valid() && updatesIter != hashKeys.cend()) {
+    int cmp = updatesIter->compare(0, updatesIter->size(),
+                                   iter->key().data() + key.size() + 1, iter->key().size() - key.size() - 1);
+    if (cmp == 0) {
+      ++updatesIter;
+      iter->Next();
+      count += 1;
+    } else if (cmp > 0) {
+      iter->Next();
+    } else {
+      ++updatesIter;
+    }
+  }
+  delete iter;
+  return count;
 }
 
 uint64_t RedisHash::CountKeysIntersection(const Slice &key, const std::map<std::string, std::string> &kvs) {

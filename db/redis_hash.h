@@ -38,10 +38,10 @@ struct HashNodeKey {
   }
   ~HashNodeKey() noexcept = default;
 
-  size_t size() { return data_.size(); }
-  Slice key() { return {data_.data(), keySize_}; }
-  Slice hashKey() { return {data_.data() + keySize_ + 1, hashKeySize_}; }
-  Slice Encode() { return data_; }
+  size_t size() const { return data_.size(); }
+  Slice key() const { return {data_.data(), keySize_}; }
+  Slice hashKey() const { return {data_.data() + keySize_ + 1, hashKeySize_}; }
+  Slice Encode() const { return data_; }
 
 private:
   size_t keySize_;
@@ -67,8 +67,11 @@ public:
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
   Status HSet(const Slice& key, const std::map<std::string, std::string>& kvs, uint64_t* count);
   Status HDel(const Slice& key, const Slice& hashKey);
+  Status HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count);
 
 private:
+  uint64_t CountKeysIntersection(const Slice& key, const HashNodeKey& hashKey);
+  uint64_t CountKeysIntersection(const Slice& key, const std::set<std::string>& hashKeys);
   uint64_t CountKeysIntersection(const Slice& key, const std::map<std::string, std::string>& kvs);
 };
 
