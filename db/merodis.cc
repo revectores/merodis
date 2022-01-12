@@ -173,4 +173,8 @@ Status Merodis::HSet(const Slice& key, const Slice& hashKey, const Slice& value)
   return hash_db_->HSet(key, hashKey, value);
 }
 
+Status Merodis::HDel(const Slice& key, const Slice& hashKey) {
+  return hash_db_->HDel(key, hashKey);
+}
+
 }

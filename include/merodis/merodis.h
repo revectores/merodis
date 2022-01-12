@@ -75,6 +75,7 @@ public:
   Status HVals(const Slice& key, std::vector<std::string>* values);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
+  Status HDel(const Slice& key, const Slice& hashKey);
 
 private:
   RedisString* string_db_;
