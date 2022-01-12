@@ -65,14 +65,14 @@ public:
   Status HVals(const Slice& key, std::vector<std::string>* values);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value, uint64_t* count);
-  Status HSet(const Slice& key, const std::map<std::string, std::string>& kvs, uint64_t* count);
+  Status HSet(const Slice& key, const std::map<Slice, Slice>& kvs, uint64_t* count);
   Status HDel(const Slice& key, const Slice& hashKey, uint64_t* count);
-  Status HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count);
+  Status HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count);
 
 private:
   uint64_t CountKeysIntersection(const Slice& key, const HashNodeKey& hashKey);
-  uint64_t CountKeysIntersection(const Slice& key, const std::set<std::string>& hashKeys);
-  uint64_t CountKeysIntersection(const Slice& key, const std::map<std::string, std::string>& kvs);
+  uint64_t CountKeysIntersection(const Slice& key, const std::set<Slice>& hashKeys);
+  uint64_t CountKeysIntersection(const Slice& key, const std::map<Slice, Slice>& kvs);
 };
 
 }

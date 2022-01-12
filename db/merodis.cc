@@ -173,7 +173,7 @@ Status Merodis::HSet(const Slice& key, const Slice& hashKey, const Slice& value,
   return hash_db_->HSet(key, hashKey, value, count);
 }
 
-Status Merodis::HSet(const Slice& key, const std::map<std::string, std::string>& kvs, uint64_t* count) {
+Status Merodis::HSet(const Slice& key, const std::map<Slice, Slice>& kvs, uint64_t* count) {
   return hash_db_->HSet(key, kvs, count);
 }
 
@@ -181,7 +181,7 @@ Status Merodis::HDel(const Slice& key, const Slice& hashKey, uint64_t* count) {
   return hash_db_->HDel(key, hashKey, count);
 }
 
-Status Merodis::HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count) {
+Status Merodis::HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count) {
   return hash_db_->HDel(key, hashKeys, count);
 }
 

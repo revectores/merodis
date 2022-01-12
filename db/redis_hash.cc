@@ -118,7 +118,7 @@ Status RedisHash::HSet(const Slice& key,
 }
 
 Status RedisHash::HSet(const Slice& key,
-                       const std::map<std::string, std::string>& kvs,
+                       const std::map<Slice, Slice>& kvs,
                        uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
@@ -160,7 +160,7 @@ Status RedisHash::HDel(const Slice& key,
 }
 
 Status RedisHash::HDel(const Slice& key,
-                       const std::set<std::string>& hashKeys,
+                       const std::set<Slice>& hashKeys,
                        uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
@@ -187,15 +187,15 @@ uint64_t RedisHash::CountKeysIntersection(const Slice& key, const HashNodeKey& n
   return s.ok();
 }
 
-uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<std::string>& hashKeys) {
+uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<Slice>& hashKeys) {
   uint64_t count = 0;
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
   iter->Next();
-  std::set<std::string>::const_iterator updatesIter = hashKeys.cbegin();
+  std::set<Slice>::const_iterator updatesIter = hashKeys.cbegin();
   while (iter->Valid() && updatesIter != hashKeys.cend()) {
-    int cmp = updatesIter->compare(0, updatesIter->size(),
-                                   iter->key().data() + key.size() + 1, iter->key().size() - key.size() - 1);
+    int cmp = updatesIter->compare({iter->key().data() + key.size() + 1,
+                                    iter->key().size() - key.size() - 1});
     if (cmp == 0) {
       ++updatesIter;
       iter->Next();
@@ -210,15 +210,15 @@ uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<std::
   return count;
 }
 
-uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::map<std::string, std::string>& kvs) {
+uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::map<Slice, Slice>& kvs) {
   uint64_t count = 0;
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
   iter->Next();
-  std::map<std::string, std::string>::const_iterator updatesIter = kvs.cbegin();
+  std::map<Slice, Slice>::const_iterator updatesIter = kvs.cbegin();
   while (iter->Valid() && updatesIter != kvs.cend()) {
-    int cmp = updatesIter->first.compare(0, updatesIter->first.size(),
-                                         iter->key().data() + key.size() + 1, iter->key().size() - key.size() - 1);
+    int cmp = updatesIter->first.compare({iter->key().data() + key.size() + 1,
+                                          iter->key().size() - key.size() - 1});
     if (cmp == 0) {
       ++updatesIter;
       iter->Next();

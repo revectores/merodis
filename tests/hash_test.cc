@@ -44,7 +44,7 @@ public:
     EXPECT_MERODIS_OK(db.HSet(key, hashKey, value, &count));
     return count;
   }
-  uint64_t HSet(const Slice& key, const std::map<std::string, std::string>& kvs) {
+  uint64_t HSet(const Slice& key, const std::map<Slice, Slice>& kvs) {
     uint64_t count = 0;
     EXPECT_MERODIS_OK(db.HSet(key, kvs, &count));
     return count;
@@ -54,7 +54,7 @@ public:
     EXPECT_MERODIS_OK(db.HDel(key, hashKey, &count));
     return count;
   }
-  uint64_t HDel(const Slice& key, const std::set<std::string>& hashKeys) {
+  uint64_t HDel(const Slice& key, const std::set<Slice>& hashKeys) {
     uint64_t count = 0;
     EXPECT_MERODIS_OK(db.HDel(key, hashKeys, &count));
     return count;
@@ -67,9 +67,9 @@ public:
   std::vector<std::string> HVals() { return HVals(key_); }
   bool HExists(const Slice& hashKey) { return HExists(key_, hashKey); }
   uint64_t HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
-  uint64_t HSet(const std::map<std::string, std::string>& kvs) { return HSet(key_, kvs); }
+  uint64_t HSet(const std::map<Slice, Slice>& kvs) { return HSet(key_, kvs); }
   uint64_t HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
-  uint64_t HDel(const std::set<std::string>& hashKeys) { return HDel(key_, hashKeys); };
+  uint64_t HDel(const std::set<Slice>& hashKeys) { return HDel(key_, hashKeys); };
 
 private:
   Slice key_;

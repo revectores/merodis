@@ -8,6 +8,18 @@
 
 #include "leveldb/db.h"
 
+namespace leveldb {
+
+inline bool operator<(const Slice& a, const Slice& b) {
+  const size_t min_len = (a.size() < b.size()) ? a.size() : b.size();
+  int r = memcmp(a.data(), b.data(), min_len);
+  return r == 0 ? a.size() < b.size() : r < 0;
+}
+
+}
+
+
+
 namespace merodis {
 
 typedef int64_t UserIndex;
@@ -76,9 +88,9 @@ public:
   Status HVals(const Slice& key, std::vector<std::string>* values);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value, uint64_t* count);
-  Status HSet(const Slice& key, const std::map<std::string, std::string>& kvs, uint64_t* count);
+  Status HSet(const Slice& key, const std::map<Slice, Slice>& kvs, uint64_t* count);
   Status HDel(const Slice& key, const Slice& hashKey, uint64_t* count);
-  Status HDel(const Slice& key, const std::set<std::string>& hashKeys, uint64_t* count);
+  Status HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count);
 
 private:
   RedisString* string_db_;
