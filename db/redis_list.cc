@@ -14,11 +14,11 @@
 
 namespace merodis {
 
-ListMetaValue::ListMetaValue() noexcept :
+ListMetaValue::ListMetaValue() noexcept:
   leftIndex(InitIndex + 1),
   rightIndex(InitIndex) {}
 
-ListMetaValue::ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept :
+ListMetaValue::ListMetaValue(uint64_t leftIndex, uint64_t rightIndex) noexcept:
   leftIndex(leftIndex),
   rightIndex(rightIndex) {}
 
@@ -35,14 +35,14 @@ Slice ListMetaValue::Encode() const {
   char* rawMetaValue = new char[sizeof(ListMetaValue)];
   EncodeFixed64(rawMetaValue, leftIndex);
   EncodeFixed64(rawMetaValue + sizeof(leftIndex), rightIndex);
-  return Slice{ rawMetaValue, sizeof(ListMetaValue)};
+  return Slice{rawMetaValue, sizeof(ListMetaValue)};
 }
 
-ListNodeKey::ListNodeKey(Slice key, uint64_t index) noexcept :
+ListNodeKey::ListNodeKey(Slice key, uint64_t index) noexcept:
   key(key),
   index(index) {}
 
-ListNodeKey::ListNodeKey(const Slice& rawValue) noexcept :
+ListNodeKey::ListNodeKey(const Slice& rawValue) noexcept:
   key(rawValue.data(), rawValue.size() - sizeof(index)) {
   index = DecodeFixed64(rawValue.data() + rawValue.size() - sizeof(index));
 }
@@ -63,7 +63,7 @@ Status RedisList::Open(const Options& options, const std::string& db_path) noexc
 }
 
 Status RedisList::LLen(const Slice& key,
-                       uint64_t *len) noexcept {
+                       uint64_t* len) noexcept {
   std::string rawListMetaValue;
   merodis::Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
@@ -247,7 +247,7 @@ Status RedisList::Pop(const Slice& key,
 
 Status RedisList::Pop(const Slice& key,
                       uint64_t count,
-                      std::vector<std::string> *values,
+                      std::vector<std::string>* values,
                       enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
@@ -326,9 +326,9 @@ Status RedisList::LInsert(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LRem(const Slice &key,
+Status RedisList::LRem(const Slice& key,
                        int64_t count,
-                       const Slice &value,
+                       const Slice& value,
                        uint64_t* removedCount) noexcept {
   *removedCount = 0;
   std::string rawListMetaValue;
@@ -405,7 +405,7 @@ Status RedisList::LMove(const Slice& srcKey,
   }
 
   ListNodeKey srcNodeKey(srcKey, srcSide == kLeft ? srcMetaValue->leftIndex : srcMetaValue->rightIndex);
-  ListNodeKey dstNodeKey(dstKey, dstSide == kLeft ? dstMetaValue->leftIndex - 1: dstMetaValue->rightIndex + 1);
+  ListNodeKey dstNodeKey(dstKey, dstSide == kLeft ? dstMetaValue->leftIndex - 1 : dstMetaValue->rightIndex + 1);
   srcSide == kLeft ? srcMetaValue->leftIndex += 1 : srcMetaValue->rightIndex -= 1;
   dstSide == kLeft ? dstMetaValue->leftIndex -= 1 : dstMetaValue->rightIndex += 1;
 
