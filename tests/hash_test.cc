@@ -42,6 +42,11 @@ public:
   void HSet(const Slice& key, const Slice& hashKey, const Slice& value) {
     EXPECT_MERODIS_OK(db.HSet(key, hashKey, value));
   }
+  uint64_t HSet(const Slice& key, const std::map<std::string, std::string>& kvs) {
+    uint64_t count = 0;
+    EXPECT_MERODIS_OK(db.HSet(key, kvs, &count));
+    return count;
+  }
   void HDel(const Slice& key, const Slice& hashKey) {
     EXPECT_MERODIS_OK(db.HDel(key, hashKey));
   }
@@ -53,6 +58,7 @@ public:
   std::vector<std::string> HVals() { return HVals(key_); }
   bool HExists(const Slice& hashKey) { return HExists(key_, hashKey); }
   void HSet(const Slice& hashKey, const Slice& value) { return HSet(key_, hashKey, value); }
+  uint64_t HSet(const std::map<std::string, std::string>& kvs) { return HSet(key_, kvs); }
   void HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
 
 private:
@@ -61,13 +67,20 @@ private:
 
 TEST_F(HashTest, HSET) {
   HSet("k0", "v0");
-  ASSERT_EQ(HGet("k0"), "v0");
-
-  HSet("k1", "v1");
-  ASSERT_EQ(HGet("k1"), "v1");
-
-  HSet("k0", HGet("k1"));
-  ASSERT_EQ(HGet("k0"), "v1");
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}));
+  ASSERT_EQ(HSet({{"k1", "v1"}}), 1);
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v1"}));
+  ASSERT_EQ(HSet({{"k2", "v2"}, {"k3", "v3"}}), 2);
+  ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}));
+  ASSERT_EQ(HSet({{"k0", "vx"}, {"k3", "vx"}}), 0);
+  ASSERT_EQ(HGetAll(), KVS({"k0", "vx"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "vx"}));
+  ASSERT_EQ(HSet({{"k#", "v#"}, {"k1", "vx"}, {"k2", "vx"}, {"k4", "v4"}}), 2);
+  ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k0", "vx"}, {"k1", "vx"}, {"k2", "vx"}, {"k3", "vx"}, {"k4", "v4"}));
+  HDel("k0");
+  HDel("k3");
+  ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k1", "vx"}, {"k2", "vx"}, {"k4", "v4"}));
+  ASSERT_EQ(HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}}), 2);
+  ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}, {"k4", "v4"}));
 }
 
 TEST_F(HashTest, HLEN) {
