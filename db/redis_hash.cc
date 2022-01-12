@@ -125,31 +125,12 @@ Status RedisHash::HSet(const Slice& key,
   if (s.ok()) metaValue = HashMetaValue(rawHashMetaValue);
   WriteBatch updates;
 
-  *count = 0;
-  Iterator* iter = db_->NewIterator(ReadOptions());
-  iter->Seek(key);
-  iter->Next();
-  std::map<std::string, std::string>::const_iterator updatesIter = kvs.cbegin();
-  while (iter->Valid() && updatesIter != kvs.cend()) {
-    int cmp = updatesIter->first.compare(0, updatesIter->first.size(),
-                                         iter->key().data() + key.size() + 1, iter->key().size() - key.size() - 1);
-    if (cmp == 0) {
-      ++updatesIter;
-      iter->Next();
-    } else if (cmp < 0) {
-      ++updatesIter;
-      *count += 1;
-    } else {
-      iter->Next();
-    }
-  }
-  *count += std::distance(updatesIter, kvs.cend());
-  delete iter;
-
   for (const auto& [k, v]: kvs) {
     HashNodeKey nodeKey(key, k);
     updates.Put(nodeKey.Encode(), v);
   }
+
+  *count = kvs.size() - CountKeysIntersection(key, kvs);
   if (*count) {
     metaValue.len += *count;
     updates.Put(key, metaValue.Encode());
@@ -161,6 +142,29 @@ Status RedisHash::HDel(const Slice &key,
                        const Slice &hashKey) {
   HashNodeKey nodeKey(key, hashKey);
   return db_->Delete(WriteOptions(), nodeKey.Encode());
+}
+
+uint64_t RedisHash::CountKeysIntersection(const Slice &key, const std::map<std::string, std::string> &kvs) {
+  uint64_t count = 0;
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  iter->Next();
+  std::map<std::string, std::string>::const_iterator updatesIter = kvs.cbegin();
+  while (iter->Valid() && updatesIter != kvs.cend()) {
+    int cmp = updatesIter->first.compare(0, updatesIter->first.size(),
+                                         iter->key().data() + key.size() + 1, iter->key().size() - key.size() - 1);
+    if (cmp == 0) {
+      ++updatesIter;
+      iter->Next();
+      count += 1;
+    } else if (cmp > 0) {
+      iter->Next();
+    } else {
+      ++updatesIter;
+    }
+  }
+  delete iter;
+  return count;
 }
 
 }
