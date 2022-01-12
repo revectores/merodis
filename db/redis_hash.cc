@@ -33,6 +33,25 @@ Status RedisHash::HGet(const Slice& key,
   return db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), value);
 }
 
+Status RedisHash::HMGet(const Slice& key,
+                        const std::vector<Slice>& hashKeys,
+                        std::vector<std::string>* values){
+  std::map<Slice, Slice> kvs;
+  for (auto const& k: hashKeys) kvs[k] = "";
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  for (auto const& [k, _] : kvs) {
+    iter->Seek(HashNodeKey(key, k).Encode());
+    if (!iter->Valid()) break;
+    kvs[k] = iter->value();
+  }
+  delete iter;
+
+  values->reserve(values->size() + hashKeys.size());
+  for (const auto& k: hashKeys) values->emplace_back(kvs[k].ToString());
+  return Status::OK();
+}
+
 Status RedisHash::HGetAll(const Slice& key, std::map<std::string, std::string>* kvs) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);

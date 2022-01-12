@@ -153,6 +153,10 @@ Status Merodis::HGet(const Slice& key, const Slice& hashKey, std::string* value)
   return hash_db_->HGet(key, hashKey, value);
 }
 
+Status Merodis::HMGet(const Slice& key, const std::vector<Slice>& hashKeys, std::vector<std::string>* values) {
+  return hash_db_->HMGet(key, hashKeys, values);
+};
+
 Status Merodis::HGetAll(const Slice& key, std::map<std::string, std::string>* kvs) {
   return hash_db_->HGetAll(key, kvs);
 }

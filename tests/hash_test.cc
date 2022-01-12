@@ -19,6 +19,11 @@ public:
     EXPECT_MERODIS_OK(db.HGet(key, hashKey, &value));
     return value;
   }
+  std::vector<std::string> HMGet(const Slice& key, const std::vector<Slice>& hashKeys) {
+    std::vector<std::string> values;
+    EXPECT_MERODIS_OK(db.HMGet(key, hashKeys, &values));
+    return values;
+  }
   std::map<std::string, std::string> HGetAll(const Slice& key) {
     std::map<std::string, std::string> kvs;
     EXPECT_MERODIS_OK(db.HGetAll(key, &kvs));
@@ -62,6 +67,7 @@ public:
 
   uint64_t HLen() { return HLen(key_); }
   std::string HGet(const Slice& hashKey) { return HGet(key_, hashKey); }
+  std::vector<std::string> HMGet(const std::vector<Slice>& hashKeys) { return HMGet(key_, hashKeys); }
   std::map<std::string, std::string> HGetAll() { return HGetAll(key_); }
   std::vector<std::string> HKeys() { return HKeys(key_); }
   std::vector<std::string> HVals() { return HVals(key_); }
@@ -109,6 +115,14 @@ TEST_F(HashTest, HExists) {
   ASSERT_EQ(HExists("k0"), true);
   HSet("k0", "v1");
   ASSERT_EQ(HExists("k0"), true);
+}
+
+TEST_F(HashTest, HMGET) {
+  ASSERT_EQ(HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}}), 3);
+  ASSERT_EQ(HMGet({"k0", "k2"}), LIST("v0", "v2"));
+  ASSERT_EQ(HMGet({"k1"}), LIST("v1"));
+  ASSERT_EQ(HMGet({"k2", "k0"}), LIST("v2", "v0"));
+  ASSERT_EQ(HMGet({"k2", "k1", "k1", "k2"}), LIST("v2", "v1", "v1", "v2"));
 }
 
 TEST_F(HashTest, HGetAll) {
