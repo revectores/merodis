@@ -24,6 +24,13 @@ MATCHER(IsInvalidArgument, "") { return arg.IsInvalidArgument(); }
 #define ASSERT_MERODIS_IS_INVALID_ARGUMENT(expression) \
   ASSERT_THAT(expression, merodis::test::IsInvalidArgument())
 
+#define LIST(...) \
+  std::vector<std::string>({ __VA_ARGS__ })
+#define UINTS(...) \
+  std::vector<uint64_t>({ __VA_ARGS__ })
+#define KVS(...) \
+  (std::map<std::string, std::string>({ __VA_ARGS__ }))
+
 }
 }
 

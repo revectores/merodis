@@ -9,11 +9,6 @@
 namespace merodis {
 namespace test {
 
-#define LIST(...) \
-  std::vector<std::string>({ __VA_ARGS__ })
-#define UINTS(...) \
-  std::vector<uint64_t>({ __VA_ARGS__ })
-
 class ListTest : public RedisTest {
 public:
   ListTest() : key_("key") {}

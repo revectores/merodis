@@ -50,6 +50,40 @@ Status RedisHash::HGetAll(const Slice& key, std::map<std::string, std::string>* 
   return Status::OK();
 }
 
+Status RedisHash::HKeys(const Slice& key, std::vector<std::string>* keys) {
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid()) {
+    delete iter;
+    return Status::OK();
+  }
+  iter->Next();
+  for (; iter->Valid(); iter->Next()) {
+    if (iter->key().size() <= key.size() || iter->key()[key.size()] != 0) break;
+    HashNodeKey nodeKey(iter->key(), key.size());
+    keys->push_back(nodeKey.hashKey().ToString());
+  }
+  delete iter;
+  return Status::OK();
+}
+
+Status RedisHash::HVals(const Slice& key, std::vector<std::string>* values) {
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid()) {
+    delete iter;
+    return Status::OK();
+  }
+  iter->Next();
+  for (; iter->Valid(); iter->Next()) {
+    if (iter->key().size() <= key.size() || iter->key()[key.size()] != 0) break;
+    HashNodeKey nodeKey(iter->key(), key.size());
+    values->push_back(iter->value().ToString());
+  }
+  delete iter;
+  return Status::OK();
+}
+
 Status RedisHash::HExists(const Slice& key, const Slice& hashKey, bool* exists) {
   std::string _;
   Status s = db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), &_);

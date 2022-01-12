@@ -71,6 +71,8 @@ public:
   Status HLen(const Slice& key, uint64_t* len);
   Status HGet(const Slice& key, const Slice& hashKey, std::string* value);
   Status HGetAll(const Slice& key, std::map<std::string, std::string>* kvs);
+  Status HKeys(const Slice& key, std::vector<std::string>* keys);
+  Status HVals(const Slice& key, std::vector<std::string>* values);
   Status HExists(const Slice& key, const Slice& hashKey, bool* exists);
   Status HSet(const Slice& key, const Slice& hashKey, const Slice& value);
 

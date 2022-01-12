@@ -157,6 +157,14 @@ Status Merodis::HGetAll(const Slice& key, std::map<std::string, std::string>* kv
   return hash_db_->HGetAll(key, kvs);
 }
 
+Status Merodis::HKeys(const Slice& key, std::vector<std::string>* keys) {
+  return hash_db_->HKeys(key, keys);
+}
+
+Status Merodis::HVals(const Slice& key, std::vector<std::string>* values) {
+  return hash_db_->HVals(key, values);
+}
+
 Status Merodis::HExists(const Slice& key, const Slice& hashKey, bool* exists) {
   return hash_db_->HExists(key, hashKey, exists);
 }
