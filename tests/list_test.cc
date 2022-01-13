@@ -110,11 +110,32 @@ public:
   uint64_t LRem(int64_t count, const Slice& value) { return LRem(key_, count, value); }
   void SetKey(const Slice& key) { key_ = key; }
 
+  virtual void TestLIndex();
+  virtual void TestLPos();
+  virtual void TestLRange();
+  virtual void TestLSet();
+  virtual void TestPush();
+  virtual void TestLPopSingle();
+  virtual void TestRPopSingle();
+  virtual void TestRPopMultiple();
+  virtual void TestLTrim();
+  virtual void TestLInsert();
+  virtual void TestLRem();
+  virtual void TestLMove();
+
 private:
   Slice key_;
 };
 
-TEST_F(ListTest, LINDEX) {
+class ListArrayImplTest : public ListTest {
+public:
+  ListArrayImplTest() {
+    options.list_impl = kListArrayImpl;
+    db.Open(options, db_path);
+  }
+};
+
+void ListTest::TestLIndex() {
   std::string value;
   ASSERT_EQ(LLen(), 0);
 
@@ -133,7 +154,7 @@ TEST_F(ListTest, LINDEX) {
   ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LIndex("key", -3, &value));
 }
 
-TEST_F(ListTest, LPOS) {
+void ListTest::TestLPos() {
   RPush({"0", "1", "0", "0", "1", "0"});
   ASSERT_EQ(List(), LIST("0", "1", "0", "0", "1", "0"));
 
@@ -162,7 +183,7 @@ TEST_F(ListTest, LPOS) {
   ASSERT_EQ(LPos("0", -2, 2, 3), UINTS(3));
 }
 
-TEST_F(ListTest, LRANGE) {
+void ListTest::TestLRange() {
   RPush({"0", "1", "2"});
   ASSERT_EQ(LRange(0, 0), LIST("0"));
   ASSERT_EQ(LRange(-3, 1), LIST("0", "1"));
@@ -172,7 +193,7 @@ TEST_F(ListTest, LRANGE) {
   ASSERT_EQ(LRange(-3, -6), LIST());
 }
 
-TEST_F(ListTest, LSET) {
+void ListTest::TestLSet() {
   RPush({"0", "1", "2"});
   ASSERT_EQ(List(), LIST("0", "1", "2"));
   LSet(0, "zero");
@@ -188,7 +209,7 @@ TEST_F(ListTest, LSET) {
   ASSERT_MERODIS_IS_INVALID_ARGUMENT(db.LSet("key", -4, "out of range"));
 }
 
-TEST_F(ListTest, PUSH) {
+void ListTest::TestPush() {
   LPush({"2", "1"});
   ASSERT_EQ(List(), LIST("1", "2"));
   LPush("0");
@@ -205,7 +226,7 @@ TEST_F(ListTest, PUSH) {
   ASSERT_MERODIS_IS_NOT_FOUND(db.RPushX("no-such-key", {"0", "1"}));
 }
 
-TEST_F(ListTest, LPOP_SINGLE) {
+void ListTest::TestLPopSingle() {
   RPush("key", {"0", "1"});
   ASSERT_EQ(List(), LIST("0", "1"));
 
@@ -222,7 +243,7 @@ TEST_F(ListTest, LPOP_SINGLE) {
   ASSERT_EQ(List(), LIST());
 }
 
-TEST_F(ListTest, RPOP_SINGLE) {
+void ListTest::TestRPopSingle() {
   RPush("key", {"0", "1"});
   ASSERT_EQ(List(), LIST("0", "1"));
 
@@ -239,7 +260,7 @@ TEST_F(ListTest, RPOP_SINGLE) {
   ASSERT_EQ(List(), LIST());
 }
 
-TEST_F(ListTest, RPOP_MULTIPLE) {
+void ListTest::TestRPopMultiple() {
   RPush("key", {"0", "1", "2"});
   ASSERT_EQ(List(), LIST("0", "1", "2"));
 
@@ -262,7 +283,7 @@ TEST_F(ListTest, RPOP_MULTIPLE) {
   ASSERT_EQ(List(), LIST("value-0", "value-1"));
 }
 
-TEST_F(ListTest, LTRIM) {
+void ListTest::TestLTrim() {
   RPush({"0", "1", "2", "3", "4", "5", "6", "7"});
   ASSERT_EQ(List(), LIST("0", "1", "2", "3", "4", "5", "6", "7"));
   LTrim(1, 6);
@@ -315,7 +336,7 @@ TEST_F(ListTest, LTRIM) {
   ASSERT_EQ(List(), LIST());
 }
 
-TEST_F(ListTest, LINSERT) {
+void ListTest::TestLInsert() {
   RPush("key", {"0", "1", "2"});
   ASSERT_EQ(List(), LIST("0", "1", "2"));
 
@@ -331,7 +352,7 @@ TEST_F(ListTest, LINSERT) {
   ASSERT_EQ(List(), LIST("-2", "-1", "0", "0.5", "1", "1.5", "2", "3"));
 }
 
-TEST_F(ListTest, LREM) {
+void ListTest::TestLRem() {
   RPush({"1", "2", "1", "2", "1", "1", "1"});
   ASSERT_EQ(List(), LIST("1", "2", "1", "2", "1", "1", "1"));
 
@@ -361,7 +382,7 @@ TEST_F(ListTest, LREM) {
   ASSERT_EQ(List(), LIST());
 }
 
-TEST_F(ListTest, LMOVE) {
+void ListTest::TestLMove() {
   RPush("k1", {"0", "1", "2"});
   RPush("k2", {"a", "b", "c"});
 
@@ -392,6 +413,54 @@ TEST_F(ListTest, LMOVE) {
 
   ASSERT_EQ(LMove("k2", "k2", kRight, kRight), "");
   ASSERT_EQ(List("k2"), LIST("b", "0", "a"));
+}
+
+TEST_F(ListArrayImplTest, LIndex) {
+  TestLIndex();
+}
+
+TEST_F(ListArrayImplTest, LPos) {
+  TestLPos();
+}
+
+TEST_F(ListArrayImplTest, LRange) {
+  TestLRange();
+}
+
+TEST_F(ListArrayImplTest, LSet) {
+  TestLSet();
+}
+
+TEST_F(ListArrayImplTest, Push) {
+  TestPush();
+}
+
+TEST_F(ListArrayImplTest, LPopSingle) {
+  TestLPopSingle();
+}
+
+TEST_F(ListArrayImplTest, RPopSingle) {
+  TestRPopSingle();
+}
+
+TEST_F(ListArrayImplTest, RPopMultiple) {
+  TestRPopMultiple();
+}
+
+TEST_F(ListArrayImplTest, LTrim) {
+  TestLTrim();
+}
+
+TEST_F(ListArrayImplTest, LInsert) {
+  TestLInsert();
+}
+
+TEST_F(ListArrayImplTest, LRem) {
+  TestLRem();
+}
+
+TEST_F(ListArrayImplTest, LMove) {
+  TestLMove();
 }
 
 }

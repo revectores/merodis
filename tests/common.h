@@ -3,18 +3,18 @@
 
 #include "gtest/gtest.h"
 #include "merodis/merodis.h"
+#include "testutil.h"
 
 
 class RedisTest : public testing::Test {
 public:
   RedisTest() {
-    s = merodis::Merodis::DestroyDB("/tmp/test", merodis::Options());
-    std::string path = "/tmp/test";
-    merodis::Options options;
+    merodis::Merodis::DestroyDB(db_path, merodis::Options());
     options.create_if_missing = true;
-    s = db.Open(options, path);
   }
 
+  std::string db_path = "/tmp/test";
+  merodis::Options options;
   merodis::Merodis db;
   merodis::Status s;
 };

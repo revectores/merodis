@@ -77,11 +77,28 @@ public:
   uint64_t HDel(const Slice& hashKey) { return HDel(key_, hashKey); }
   uint64_t HDel(const std::set<Slice>& hashKeys) { return HDel(key_, hashKeys); };
 
+  virtual void TestHSet();
+  virtual void TestHLen();
+  virtual void TestHExists();
+  virtual void TestHMGet();
+  virtual void TestHGetAll();
+  virtual void TestHKeys();
+  virtual void TestHVals();
+  virtual void TestHDel();
+
 private:
   Slice key_;
 };
 
-TEST_F(HashTest, HSET) {
+class HashBasicImplTest: public HashTest {
+public:
+  HashBasicImplTest() {
+    options.hash_impl = kHashBasicImpl;
+    db.Open(options, db_path);
+  }
+};
+
+void HashTest::TestHSet() {
   ASSERT_EQ(HSet("k0", "v0"), 1);
   ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}));
   ASSERT_EQ(HSet({{"k1", "v1"}}), 1);
@@ -99,7 +116,7 @@ TEST_F(HashTest, HSET) {
   ASSERT_EQ(HGetAll(), KVS({"k#", "v#"}, {"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}, {"k4", "v4"}));
 }
 
-TEST_F(HashTest, HLEN) {
+void HashTest::TestHLen() {
   ASSERT_EQ(HLen(), 0);
   HSet("k0", "v0");
   ASSERT_EQ(HLen(), 1);
@@ -109,7 +126,7 @@ TEST_F(HashTest, HLEN) {
   ASSERT_EQ(HLen(), 2);
 }
 
-TEST_F(HashTest, HExists) {
+void HashTest::TestHExists() {
   ASSERT_EQ(HExists("k0"), false);
   HSet("k0", "v0");
   ASSERT_EQ(HExists("k0"), true);
@@ -117,7 +134,7 @@ TEST_F(HashTest, HExists) {
   ASSERT_EQ(HExists("k0"), true);
 }
 
-TEST_F(HashTest, HMGET) {
+void HashTest::TestHMGet() {
   ASSERT_EQ(HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}}), 3);
   ASSERT_EQ(HMGet({"k0", "k2"}), LIST("v0", "v2"));
   ASSERT_EQ(HMGet({"k1"}), LIST("v1"));
@@ -125,7 +142,7 @@ TEST_F(HashTest, HMGET) {
   ASSERT_EQ(HMGet({"k2", "k1", "k1", "k2"}), LIST("v2", "v1", "v1", "v2"));
 }
 
-TEST_F(HashTest, HGetAll) {
+void HashTest::TestHGetAll() {
   ASSERT_EQ(HGetAll(), KVS());
   HSet("k0", "v0");
   ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}));
@@ -135,7 +152,7 @@ TEST_F(HashTest, HGetAll) {
   ASSERT_EQ(HGetAll(), KVS({"k0", "v0"}, {"k1", "v2"}));
 }
 
-TEST_F(HashTest, HKeys) {
+void HashTest::TestHKeys() {
   ASSERT_EQ(HKeys(), LIST());
   HSet("k0", "v0");
   ASSERT_EQ(HKeys(), LIST("k0"));
@@ -145,7 +162,7 @@ TEST_F(HashTest, HKeys) {
   ASSERT_EQ(HKeys(), LIST("k0", "k1"));
 }
 
-TEST_F(HashTest, HVals) {
+void HashTest::TestHVals() {
   ASSERT_EQ(HVals(), LIST());
   HSet("k0", "v0");
   ASSERT_EQ(HVals(), LIST("v0"));
@@ -155,7 +172,7 @@ TEST_F(HashTest, HVals) {
   ASSERT_EQ(HVals(), LIST("v0", "v2"));
 }
 
-TEST_F(HashTest, HDel) {
+void HashTest::TestHDel() {
   HSet({{"k0", "v0"}, {"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}});
   ASSERT_EQ(HLen(), 4);
   ASSERT_EQ(HKeys(), LIST("k0", "k1", "k2", "k3"));
@@ -171,6 +188,38 @@ TEST_F(HashTest, HDel) {
   ASSERT_EQ(HDel({"k0", "k1"}), 2);
   ASSERT_EQ(HLen(), 0);
   ASSERT_EQ(HKeys(), LIST());
+}
+
+TEST_F(HashBasicImplTest, HSet) {
+  TestHSet();
+}
+
+TEST_F(HashBasicImplTest, HLen) {
+  TestHLen();
+}
+
+TEST_F(HashBasicImplTest, HExists) {
+  TestHExists();
+}
+
+TEST_F(HashBasicImplTest, HMGet) {
+  TestHMGet();
+}
+
+TEST_F(HashBasicImplTest, HGetAll) {
+  TestHGetAll();
+}
+
+TEST_F(HashBasicImplTest, HKeys) {
+  TestHKeys();
+}
+
+TEST_F(HashBasicImplTest, HVals) {
+  TestHVals();
+}
+
+TEST_F(HashBasicImplTest, HDel) {
+  TestHDel();
 }
 
 }

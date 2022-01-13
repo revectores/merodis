@@ -24,11 +24,28 @@ public:
   void Set(const Slice& value) { Set(key_, value); }
   void SetKey(const Slice& key) { key_ = key; }
 
+  virtual void TestGetSet();
 private:
   Slice key_;
 };
 
-TEST_F(StringTest, SET_GET) {
+class StringBasicImplTest : public StringTest {
+public:
+  StringBasicImplTest() {
+    options.string_impl = kStringBasicImpl;
+    db.Open(options, db_path);
+  }
+};
+
+class StringTypedImplTest : public StringTest {
+public:
+  StringTypedImplTest() {
+    options.string_impl = kStringTypedImpl;
+    db.Open(options, db_path);
+  }
+};
+
+void StringTest::TestGetSet() {
   Set("value");
   ASSERT_EQ(Get(), "value");
   Set("123");
@@ -51,6 +68,14 @@ TEST_F(StringTest, SET_GET) {
   ASSERT_EQ(Get(), "1xx");
   Set("1.2");
   ASSERT_EQ(Get(), "1.2");
+}
+
+TEST_F(StringBasicImplTest, GetSet) {
+  TestGetSet();
+}
+
+TEST_F(StringTypedImplTest, GetSet) {
+  TestGetSet();
 }
 
 }
