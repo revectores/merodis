@@ -3,6 +3,7 @@
 #include <string>
 
 #include "leveldb/db.h"
+#include "layout.h"
 
 namespace merodis {
 
@@ -15,11 +16,18 @@ Status RedisString::Open(const Options& options, const std::string& db_path) noe
 }
 
 Status RedisString::Get(const Slice& key, std::string* value) noexcept {
-  return db_->Get(ReadOptions(), key, value);
+  std::string raw;
+  Status s = db_->Get(ReadOptions(), key, &raw);
+  if (!s.ok()) return s;
+  TypedValue typedValue;
+  typedValue.parse(raw);
+  *value = typedValue.ToString();
+  return s;
 }
 
 Status RedisString::Set(const Slice& key, const Slice& value) noexcept {
-  return db_->Put(WriteOptions(), key, value);
+  TypedValue typedValue(value);
+  return db_->Put(WriteOptions(), key, typedValue.Encode());
 }
 
 }

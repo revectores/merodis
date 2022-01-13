@@ -29,9 +29,11 @@ target_sources(merodis PRIVATE
   db/redis_list.h
   db/redis_hash.cc
   db/redis_hash.h
+  db/layout.cc
+  db/layout.h
   util/coding.h
-  util/sequence.h
   util/sequence.cc
+  util/sequence.h
 )
 target_link_libraries(merodis leveldb)
 
