@@ -23,8 +23,9 @@ target_sources(merodis PRIVATE
   db/redis.h
   db/merodis.cc
   include/merodis/merodis.h
-  db/redis_string.cc
   db/redis_string.h
+  db/redis_string_typed_impl.cc
+  db/redis_string_typed_impl.h
   db/redis_list.cc
   db/redis_list.h
   db/redis_hash.cc

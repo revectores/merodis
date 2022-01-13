@@ -6,14 +6,13 @@
 
 namespace merodis {
 
-class RedisString final : public Redis {
+class RedisString : public Redis {
 public:
-  RedisString() noexcept;
-  ~RedisString() noexcept final;
+  RedisString() noexcept = default;
+  ~RedisString() noexcept override = default;
 
-  Status Open(const Options& options, const std::string& db_path) noexcept final;
-  Status Get(const Slice& key, std::string* value) noexcept;
-  Status Set(const Slice& key, const Slice& value) noexcept;
+  virtual Status Get(const Slice& key, std::string* value) noexcept = 0;
+  virtual Status Set(const Slice& key, const Slice& value) noexcept = 0;
 };
 
 }

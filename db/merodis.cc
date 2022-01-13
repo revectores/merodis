@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "redis_string.h"
+#include "redis_string_typed_impl.h"
 #include "redis_list.h"
 #include "redis_hash.h"
 
@@ -27,7 +27,7 @@ Merodis::~Merodis() noexcept {
 
 Status Merodis::Open(const Options& options, const std::string& db_path) noexcept {
   Status s;
-  string_db_ = new RedisString;
+  string_db_ = new RedisStringTypedImpl;
   list_db_ = new RedisList;
   hash_db_ = new RedisHash;
   Redis* dbs_[] = {string_db_, list_db_, hash_db_};
