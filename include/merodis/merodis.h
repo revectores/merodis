@@ -26,14 +26,21 @@ typedef int64_t UserIndex;
 
 enum BeforeOrAfter {
   kBefore,
-  kAfter
+  kAfter,
 };
 enum Side {
   kLeft,
-  kRight
+  kRight,
+};
+enum StringImpl {
+  kStringBasicImpl,
+  kStringTypedImpl,
 };
 
-using Options = leveldb::Options;
+struct Options : public leveldb::Options {
+  enum StringImpl string_impl = kStringTypedImpl;
+};
+
 using ReadOptions = leveldb::ReadOptions;
 using WriteOptions = leveldb::WriteOptions;
 using WriteBatch = leveldb::WriteBatch;
