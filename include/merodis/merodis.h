@@ -36,9 +36,13 @@ enum StringImpl {
   kStringBasicImpl,
   kStringTypedImpl,
 };
+enum ListImpl {
+  kListArrayImpl,
+};
 
 struct Options : public leveldb::Options {
   enum StringImpl string_impl = kStringTypedImpl;
+  enum ListImpl list_impl = kListArrayImpl;
 };
 
 using ReadOptions = leveldb::ReadOptions;

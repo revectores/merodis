@@ -1,4 +1,4 @@
-#include "redis_list.h"
+#include "redis_list_array_impl.h"
 
 #include <cstdio>
 #include <iostream>
@@ -54,16 +54,16 @@ std::string ListNodeKey::Encode() const {
   return rawListNodeKey;
 }
 
-RedisList::RedisList() noexcept = default;
+RedisListArrayImpl::RedisListArrayImpl() noexcept = default;
 
-RedisList::~RedisList() noexcept = default;
+RedisListArrayImpl::~RedisListArrayImpl() noexcept = default;
 
-Status RedisList::Open(const Options& options, const std::string& db_path) noexcept {
+Status RedisListArrayImpl::Open(const Options& options, const std::string& db_path) noexcept {
   return leveldb::DB::Open(options, db_path, &db_);
 }
 
-Status RedisList::LLen(const Slice& key,
-                       uint64_t* len) noexcept {
+Status RedisListArrayImpl::LLen(const Slice& key,
+                                uint64_t* len) noexcept {
   std::string rawListMetaValue;
   merodis::Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
 
@@ -79,9 +79,9 @@ Status RedisList::LLen(const Slice& key,
   }
 }
 
-Status RedisList::LIndex(const Slice& key,
-                         UserIndex index,
-                         std::string* value) noexcept {
+Status RedisListArrayImpl::LIndex(const Slice& key,
+                                  UserIndex index,
+                                  std::string* value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -95,12 +95,12 @@ Status RedisList::LIndex(const Slice& key,
   return db_->Get(ReadOptions(), nodeKey.Encode(), value);
 }
 
-Status RedisList::LPos(const Slice& key,
-                       const Slice& value,
-                       int64_t rank,
-                       int64_t count,
-                       int64_t maxlen,
-                       std::vector<uint64_t>& indices) noexcept {
+Status RedisListArrayImpl::LPos(const Slice& key,
+                                const Slice& value,
+                                int64_t rank,
+                                int64_t count,
+                                int64_t maxlen,
+                                std::vector<uint64_t>& indices) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -147,10 +147,10 @@ Status RedisList::LPos(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LRange(const Slice& key,
-                         UserIndex from,
-                         UserIndex to,
-                         std::vector<std::string>* values) noexcept {
+Status RedisListArrayImpl::LRange(const Slice& key,
+                                  UserIndex from,
+                                  UserIndex to,
+                                  std::vector<std::string>* values) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -171,7 +171,7 @@ Status RedisList::LRange(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LSet(const Slice& key, UserIndex index, const Slice& value) noexcept {
+Status RedisListArrayImpl::LSet(const Slice& key, UserIndex index, const Slice& value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -185,17 +185,17 @@ Status RedisList::LSet(const Slice& key, UserIndex index, const Slice& value) no
   return db_->Put(WriteOptions(), nodeKey.Encode(), value);
 }
 
-Status RedisList::Push(const Slice& key,
-                       const Slice& value,
-                       bool createListIfNotFound,
-                       enum Side side) noexcept {
+Status RedisListArrayImpl::Push(const Slice& key,
+                                const Slice& value,
+                                bool createListIfNotFound,
+                                enum Side side) noexcept {
   return Push(key, std::vector<Slice>{value}, createListIfNotFound, side);
 }
 
-Status RedisList::Push(const Slice& key,
-                       const std::vector<Slice>& values,
-                       bool createListIfNotFound,
-                       enum Side side) noexcept {
+Status RedisListArrayImpl::Push(const Slice& key,
+                                const std::vector<Slice>& values,
+                                bool createListIfNotFound,
+                                enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!(s.ok() || s.IsNotFound() && createListIfNotFound)) return s;
@@ -222,9 +222,9 @@ Status RedisList::Push(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisList::Pop(const Slice& key,
-                      std::string* value,
-                      enum Side side) noexcept {
+Status RedisListArrayImpl::Pop(const Slice& key,
+                               std::string* value,
+                               enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -245,10 +245,10 @@ Status RedisList::Pop(const Slice& key,
   return db_->Put(WriteOptions(), key, metaValue.Encode());
 }
 
-Status RedisList::Pop(const Slice& key,
-                      uint64_t count,
-                      std::vector<std::string>* values,
-                      enum Side side) noexcept {
+Status RedisListArrayImpl::Pop(const Slice& key,
+                               uint64_t count,
+                               std::vector<std::string>* values,
+                               enum Side side) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -267,9 +267,9 @@ Status RedisList::Pop(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LTrim(const Slice& key,
-                        UserIndex from,
-                        UserIndex to) noexcept {
+Status RedisListArrayImpl::LTrim(const Slice& key,
+                                 UserIndex from,
+                                 UserIndex to) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -281,10 +281,10 @@ Status RedisList::LTrim(const Slice& key,
   return db_->Put(WriteOptions(), key, metaValue.Encode());
 }
 
-Status RedisList::LInsert(const Slice& key,
-                          const BeforeOrAfter& beforeOrAfter,
-                          const Slice& pivotValue,
-                          const Slice& value) noexcept {
+Status RedisListArrayImpl::LInsert(const Slice& key,
+                                   const BeforeOrAfter& beforeOrAfter,
+                                   const Slice& pivotValue,
+                                   const Slice& value) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -326,10 +326,10 @@ Status RedisList::LInsert(const Slice& key,
   return Status::OK();
 }
 
-Status RedisList::LRem(const Slice& key,
-                       int64_t count,
-                       const Slice& value,
-                       uint64_t* removedCount) noexcept {
+Status RedisListArrayImpl::LRem(const Slice& key,
+                                int64_t count,
+                                const Slice& value,
+                                uint64_t* removedCount) noexcept {
   *removedCount = 0;
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
@@ -386,11 +386,11 @@ Status RedisList::LRem(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisList::LMove(const Slice& srcKey,
-                        const Slice& dstKey,
-                        enum Side srcSide,
-                        enum Side dstSide,
-                        std::string* value) noexcept {
+Status RedisListArrayImpl::LMove(const Slice& srcKey,
+                                 const Slice& dstKey,
+                                 enum Side srcSide,
+                                 enum Side dstSide,
+                                 std::string* value) noexcept {
   if (srcKey == dstKey && srcSide == dstSide) return Status::OK();
 
   std::string rawListMetaValue;
@@ -418,11 +418,11 @@ Status RedisList::LMove(const Slice& srcKey,
   return db_->Write(WriteOptions(), &updates);
 }
 
-inline InternalIndex RedisList::GetInternalIndex(UserIndex userIndex, ListMetaValue metaValue) noexcept {
+inline InternalIndex RedisListArrayImpl::GetInternalIndex(UserIndex userIndex, ListMetaValue metaValue) noexcept {
   return userIndex >= 0 ? metaValue.leftIndex + userIndex : metaValue.rightIndex + userIndex + 1;
 }
 
-inline bool RedisList::IsValidInternalIndex(InternalIndex internalIndex, ListMetaValue metaValue) noexcept {
+inline bool RedisListArrayImpl::IsValidInternalIndex(InternalIndex internalIndex, ListMetaValue metaValue) noexcept {
   return metaValue.leftIndex <= internalIndex && internalIndex <= metaValue.rightIndex;
 }
 
