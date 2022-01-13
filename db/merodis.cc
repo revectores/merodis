@@ -7,7 +7,7 @@
 #include "redis_string_basic_impl.h"
 #include "redis_string_typed_impl.h"
 #include "redis_list_array_impl.h"
-#include "redis_hash.h"
+#include "redis_hash_basic_impl.h"
 
 namespace merodis {
 
@@ -41,8 +41,11 @@ Status Merodis::Open(const Options& options, const std::string& db_path) noexcep
     default:
       list_db_ = new RedisListArrayImpl;
   }
-  list_db_ = new RedisListArrayImpl;
-  hash_db_ = new RedisHash;
+  switch (options.hash_impl) {
+    case kHashBasicImpl:
+    default:
+      hash_db_ = new RedisHashBasicImpl;
+  }
   Redis* dbs_[] = {string_db_, list_db_, hash_db_};
   std::string db_home(db_path + "/");
   for (int c = 0; c < databases.size(); c++) {

@@ -31,8 +31,9 @@ target_sources(merodis PRIVATE
   db/redis_list.h
   db/redis_list_array_impl.cc
   db/redis_list_array_impl.h
-  db/redis_hash.cc
   db/redis_hash.h
+  db/redis_hash_basic_impl.cc
+  db/redis_hash_basic_impl.h
   db/layout.cc
   db/layout.h
   util/coding.h

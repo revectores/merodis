@@ -1,20 +1,16 @@
-#include "redis_hash.h"
+#include "redis_hash_basic_impl.h"
 
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 
 namespace merodis {
 
-RedisHash::RedisHash() noexcept = default;
+RedisHashBasicImpl::RedisHashBasicImpl() noexcept = default;
 
-RedisHash::~RedisHash() noexcept = default;
+RedisHashBasicImpl::~RedisHashBasicImpl() noexcept = default;
 
-Status RedisHash::Open(const Options& options, const std::string& db_path) noexcept {
-  return leveldb::DB::Open(options, db_path, &db_);
-}
-
-Status RedisHash::HLen(const Slice& key,
-                       uint64_t* len) {
+Status RedisHashBasicImpl::HLen(const Slice& key,
+                                uint64_t* len) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   if (s.ok()) {
@@ -27,15 +23,15 @@ Status RedisHash::HLen(const Slice& key,
   return s;
 }
 
-Status RedisHash::HGet(const Slice& key,
-                       const Slice& hashKey,
-                       std::string* value) {
+Status RedisHashBasicImpl::HGet(const Slice& key,
+                                const Slice& hashKey,
+                                std::string* value) {
   return db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), value);
 }
 
-Status RedisHash::HMGet(const Slice& key,
-                        const std::vector<Slice>& hashKeys,
-                        std::vector<std::string>* values){
+Status RedisHashBasicImpl::HMGet(const Slice& key,
+                                 const std::vector<Slice>& hashKeys,
+                                 std::vector<std::string>* values){
   std::map<Slice, Slice> kvs;
   for (auto const& k: hashKeys) kvs[k] = "";
 
@@ -52,7 +48,7 @@ Status RedisHash::HMGet(const Slice& key,
   return Status::OK();
 }
 
-Status RedisHash::HGetAll(const Slice& key, std::map<std::string, std::string>* kvs) {
+Status RedisHashBasicImpl::HGetAll(const Slice& key, std::map<std::string, std::string>* kvs) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
   if (!iter->Valid()) {
@@ -69,7 +65,7 @@ Status RedisHash::HGetAll(const Slice& key, std::map<std::string, std::string>* 
   return Status::OK();
 }
 
-Status RedisHash::HKeys(const Slice& key, std::vector<std::string>* keys) {
+Status RedisHashBasicImpl::HKeys(const Slice& key, std::vector<std::string>* keys) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
   if (!iter->Valid()) {
@@ -86,7 +82,7 @@ Status RedisHash::HKeys(const Slice& key, std::vector<std::string>* keys) {
   return Status::OK();
 }
 
-Status RedisHash::HVals(const Slice& key, std::vector<std::string>* values) {
+Status RedisHashBasicImpl::HVals(const Slice& key, std::vector<std::string>* values) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
   if (!iter->Valid()) {
@@ -103,7 +99,7 @@ Status RedisHash::HVals(const Slice& key, std::vector<std::string>* values) {
   return Status::OK();
 }
 
-Status RedisHash::HExists(const Slice& key, const Slice& hashKey, bool* exists) {
+Status RedisHashBasicImpl::HExists(const Slice& key, const Slice& hashKey, bool* exists) {
   std::string _;
   Status s = db_->Get(ReadOptions(), HashNodeKey(key, hashKey).Encode(), &_);
   if (s.ok()) {
@@ -115,10 +111,10 @@ Status RedisHash::HExists(const Slice& key, const Slice& hashKey, bool* exists) 
   return s;
 }
 
-Status RedisHash::HSet(const Slice& key,
-                       const Slice& hashKey,
-                       const Slice& value,
-                       uint64_t* count) {
+Status RedisHashBasicImpl::HSet(const Slice& key,
+                                const Slice& hashKey,
+                                const Slice& value,
+                                uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -136,9 +132,9 @@ Status RedisHash::HSet(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisHash::HSet(const Slice& key,
-                       const std::map<Slice, Slice>& kvs,
-                       uint64_t* count) {
+Status RedisHashBasicImpl::HSet(const Slice& key,
+                                const std::map<Slice, Slice>& kvs,
+                                uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -158,9 +154,9 @@ Status RedisHash::HSet(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisHash::HDel(const Slice& key,
-                       const Slice& hashKey,
-                       uint64_t* count) {
+Status RedisHashBasicImpl::HDel(const Slice& key,
+                                const Slice& hashKey,
+                                uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -178,9 +174,9 @@ Status RedisHash::HDel(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-Status RedisHash::HDel(const Slice& key,
-                       const std::set<Slice>& hashKeys,
-                       uint64_t* count) {
+Status RedisHashBasicImpl::HDel(const Slice& key,
+                                const std::set<Slice>& hashKeys,
+                                uint64_t* count) {
   std::string rawHashMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawHashMetaValue);
   HashMetaValue metaValue;
@@ -200,13 +196,13 @@ Status RedisHash::HDel(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
-uint64_t RedisHash::CountKeysIntersection(const Slice& key, const HashNodeKey& nodeKey) {
+uint64_t RedisHashBasicImpl::CountKeysIntersection(const Slice& key, const HashNodeKey& nodeKey) {
   std::string _;
   Status s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
   return s.ok();
 }
 
-uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<Slice>& hashKeys) {
+uint64_t RedisHashBasicImpl::CountKeysIntersection(const Slice& key, const std::set<Slice>& hashKeys) {
   uint64_t count = 0;
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
@@ -229,7 +225,7 @@ uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::set<Slice
   return count;
 }
 
-uint64_t RedisHash::CountKeysIntersection(const Slice& key, const std::map<Slice, Slice>& kvs) {
+uint64_t RedisHashBasicImpl::CountKeysIntersection(const Slice& key, const std::map<Slice, Slice>& kvs) {
   uint64_t count = 0;
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);

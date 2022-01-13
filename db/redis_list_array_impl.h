@@ -44,7 +44,6 @@ public:
   RedisListArrayImpl() noexcept;
   ~RedisListArrayImpl() noexcept final;
 
-  Status Open(const Options& options, const std::string& db_path) noexcept final;
   Status LLen(const Slice& key, uint64_t* len) noexcept override;
   Status LIndex(const Slice& key, UserIndex index, std::string* value) noexcept final;
   Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept final;

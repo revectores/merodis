@@ -58,10 +58,6 @@ RedisListArrayImpl::RedisListArrayImpl() noexcept = default;
 
 RedisListArrayImpl::~RedisListArrayImpl() noexcept = default;
 
-Status RedisListArrayImpl::Open(const Options& options, const std::string& db_path) noexcept {
-  return leveldb::DB::Open(options, db_path, &db_);
-}
-
 Status RedisListArrayImpl::LLen(const Slice& key,
                                 uint64_t* len) noexcept {
   std::string rawListMetaValue;
