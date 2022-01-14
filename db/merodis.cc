@@ -74,6 +74,22 @@ Status Merodis::Set(const Slice& key, const Slice& value) noexcept {
   return string_db_->Set(key, value);
 }
 
+Status Merodis::Incr(const Slice& key, int64_t* result) noexcept {
+  return string_db_->Incr(key, result);
+}
+
+Status Merodis::IncrBy(const Slice& key, int64_t increment, int64_t* result) noexcept {
+  return string_db_->IncrBy(key, increment, result);
+}
+
+Status Merodis::Decr(const Slice& key, int64_t* result) noexcept {
+  return string_db_->Decr(key, result);
+}
+
+Status Merodis::DecrBy(const Slice& key, int64_t decrement, int64_t* result) noexcept {
+  return string_db_->DecrBy(key, decrement, result);
+}
+
 // List Operators
 Status Merodis::LLen(const Slice& key, uint64_t* len) noexcept {
   return list_db_->LLen(key, len);

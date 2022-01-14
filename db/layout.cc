@@ -10,7 +10,7 @@ namespace merodis {
 Value::Value() noexcept: s() {}
 Value::Value(Slice s) noexcept: s(s) {}
 Value::Value(int64_t i64) noexcept: i64(i64) {}
-Value::~Value() noexcept {};
+Value::~Value() noexcept {}
 
 TypedValue::TypedValue() noexcept:
   type(kString),

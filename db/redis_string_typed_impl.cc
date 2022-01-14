@@ -30,4 +30,20 @@ Status RedisStringTypedImpl::Set(const Slice& key, const Slice& value) noexcept 
   return db_->Put(WriteOptions(), key, typedValue.Encode());
 }
 
+Status RedisStringTypedImpl::Incr(const Slice& key, int64_t* result) noexcept {
+  return Status::NotSupported("");
+}
+
+Status RedisStringTypedImpl::IncrBy(const Slice& key, int64_t increment, int64_t* result) noexcept {
+  return Status::NotSupported("");
+}
+
+Status RedisStringTypedImpl::Decr(const Slice& key, int64_t* result) noexcept {
+  return Status::NotSupported("");
+}
+
+Status RedisStringTypedImpl::DecrBy(const Slice& key, int64_t decrement, int64_t* result) noexcept {
+  return Status::NotSupported("");
+}
+
 }

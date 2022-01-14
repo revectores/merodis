@@ -6,6 +6,12 @@
 
 #include "leveldb/slice.h"
 
+enum class RangeError {
+  kOK,
+  kOverflow,
+  kUnderflow
+};
+
 inline int SliceToInt64(const leveldb::Slice& s, int64_t& n) {
   const int prevErrno = errno;
   errno = 0;
@@ -16,6 +22,16 @@ inline int SliceToInt64(const leveldb::Slice& s, int64_t& n) {
   if (errno) n = 0;
   errno = prevErrno;
   return thisErrno;
+}
+
+inline enum RangeError CheckAdditionRangeError(int64_t n1, int64_t n2) {
+  if (n2 > 0 && std::numeric_limits<int64_t>::max() - n2 < n1) {
+    return RangeError::kOverflow;
+  }
+  if (n2 < 0 && std::numeric_limits<int64_t>::min() - n2 > n1) {
+    return RangeError::kUnderflow;
+  }
+  return RangeError::kOK;
 }
 
 #endif //MERODIS_NUMBER_H
