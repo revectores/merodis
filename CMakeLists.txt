@@ -37,6 +37,7 @@ target_sources(merodis PRIVATE
   db/layout.cc
   db/layout.h
   util/coding.h
+  util/number.h
   util/sequence.cc
   util/sequence.h
 )

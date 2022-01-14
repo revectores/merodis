@@ -1,9 +1,9 @@
 #include "layout.h"
 
 #include <utility>
-#include <cerrno>
 
 #include "util/coding.h"
+#include "util/number.h"
 
 namespace merodis {
 
@@ -17,10 +17,8 @@ TypedValue::TypedValue() noexcept:
   value() {}
 
 TypedValue::TypedValue(const Slice& s) noexcept {
-  char* ptr = nullptr;
-  errno = 0;
-  int64_t n = strtoll(s.data(), &ptr, 10);
-  if (!errno && !s.empty() && ptr == s.data() + s.size()) {
+  int64_t n;
+  if (SliceToInt64(s, n) == 0) {
     type = kInt64;
     value.i64 = n;
   } else {

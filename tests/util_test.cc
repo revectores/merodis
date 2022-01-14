@@ -1,5 +1,8 @@
+#include <cerrno>
+
 #include "gtest/gtest.h"
 #include "util/sequence.h"
+#include "util/number.h"
 
 class UtilTest : public testing::Test {
 public:
@@ -30,5 +33,28 @@ TEST_F(UtilTest, TestComputeMovedSteps) {
                       6, 5, {});
   DoComputeMovedSteps(1, 100, {1, 2, 4, 6, 7, 8, 20, 50, 60, 99, 100},
                       10, 98,  {{3, 3, 7}, {5, 5, 6}, {9, 19, 3}, {21, 49, 2}, {51, 59, 1}, {61, 98, 0}});
+}
 
+TEST_F(UtilTest, Slice2Int64) {
+  int64_t n;
+  ASSERT_EQ(SliceToInt64("123", n), 0);
+  ASSERT_EQ(n, 123);
+  ASSERT_EQ(SliceToInt64("0", n), 0);
+  ASSERT_EQ(n, 0);
+  ASSERT_EQ(SliceToInt64("-123", n), 0);
+  ASSERT_EQ(n, -123);
+  ASSERT_EQ(SliceToInt64("9223372036854775807", n), 0);
+  ASSERT_EQ(n, 9223372036854775807);
+  ASSERT_EQ(SliceToInt64("9223372036854775808", n), ERANGE);
+  ASSERT_EQ(n, 0);
+  ASSERT_EQ(SliceToInt64("-9223372036854775808", n), 0);
+  ASSERT_EQ(n, -9223372036854775808U);
+  ASSERT_EQ(SliceToInt64("-9223372036854775809", n), ERANGE);
+  ASSERT_EQ(n, 0);
+  ASSERT_EQ(SliceToInt64("", n), EINVAL);
+  ASSERT_EQ(n, 0);
+  ASSERT_EQ(SliceToInt64("1xx", n), EINVAL);
+  ASSERT_EQ(n, 0);
+  ASSERT_EQ(SliceToInt64("1.2", n), EINVAL);
+  ASSERT_EQ(n, 0);
 }
