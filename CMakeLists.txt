@@ -40,6 +40,7 @@ target_sources(merodis PRIVATE
   util/number.h
   util/sequence.cc
   util/sequence.h
+  util/variant_helper.h
 )
 target_link_libraries(merodis leveldb)
 

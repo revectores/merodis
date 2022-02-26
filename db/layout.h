@@ -2,6 +2,7 @@
 #define MERODIS_LAYOUT_H
 
 #include <string>
+#include <variant>
 #include "merodis/merodis.h"
 
 namespace merodis {
@@ -30,8 +31,7 @@ struct TypedValue {
   std::string Encode() const noexcept;
   std::string ToString() const noexcept;
 
-  enum ValueType type;
-  union Value value;
+  std::variant<Slice, int64_t> value;
 };
 
 }

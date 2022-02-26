@@ -108,6 +108,8 @@ void StringTest::TestIncrDecr() {
   ASSERT_EQ(Get(), "2");
   ASSERT_EQ(Decr(), 1);
   ASSERT_EQ(Get(), "1");
+  Incr("nokey");
+  ASSERT_EQ(Get("nokey"), "1");
 
   Set("1xx");
   s = db.Incr("key", &n);
