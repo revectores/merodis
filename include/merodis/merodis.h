@@ -42,11 +42,15 @@ enum ListImpl {
 enum HashImpl {
   kHashBasicImpl,
 };
+enum SetImpl {
+  kSetBasicImpl,
+};
 
 struct Options : public leveldb::Options {
   enum StringImpl string_impl = kStringTypedImpl;
   enum ListImpl list_impl = kListArrayImpl;
   enum HashImpl hash_impl = kHashBasicImpl;
+  enum SetImpl set_impl = kSetBasicImpl;
 };
 
 using ReadOptions = leveldb::ReadOptions;
@@ -59,6 +63,7 @@ using Iterator = leveldb::Iterator;
 class RedisString;
 class RedisList;
 class RedisHash;
+class RedisSet;
 
 class Merodis {
 public:
@@ -112,10 +117,13 @@ public:
   Status HDel(const Slice& key, const Slice& hashKey, uint64_t* count);
   Status HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count);
 
+  // Set Operators
+
 private:
   RedisString* string_db_;
   RedisList* list_db_;
   RedisHash* hash_db_;
+  RedisSet* set_db_;
 };
 
 }

@@ -8,22 +8,25 @@
 #include "redis_string_typed_impl.h"
 #include "redis_list_array_impl.h"
 #include "redis_hash_basic_impl.h"
+#include "redis_set_basic_impl.h"
 
 namespace merodis {
 
 static const std::vector<std::string> databases {
-  "string", "list", "hash"
+  "string", "list", "hash", "set"
 };
 
 Merodis::Merodis() noexcept :
   string_db_(nullptr),
   list_db_(nullptr),
-  hash_db_(nullptr) {}
+  hash_db_(nullptr),
+  set_db_(nullptr) {}
 
 Merodis::~Merodis() noexcept {
   delete string_db_;
   delete list_db_;
   delete hash_db_;
+  delete set_db_;
 }
 
 Status Merodis::Open(const Options& options, const std::string& db_path) noexcept {
@@ -46,7 +49,12 @@ Status Merodis::Open(const Options& options, const std::string& db_path) noexcep
     default:
       hash_db_ = new RedisHashBasicImpl;
   }
-  Redis* dbs_[] = {string_db_, list_db_, hash_db_};
+  switch (options.set_impl) {
+    case kSetBasicImpl:
+    default:
+      set_db_ = new RedisSetBasicImpl;
+  }
+  Redis* dbs_[] = {string_db_, list_db_, hash_db_, set_db_};
   std::string db_home(db_path + "/");
   for (int c = 0; c < databases.size(); c++) {
     s = dbs_[c]->Open(options, db_home + databases[c]);
@@ -220,5 +228,7 @@ Status Merodis::HDel(const Slice& key, const Slice& hashKey, uint64_t* count) {
 Status Merodis::HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count) {
   return hash_db_->HDel(key, hashKeys, count);
 }
+
+// Set Operators
 
 }
