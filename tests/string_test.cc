@@ -142,11 +142,15 @@ TEST_F(StringBasicImplTest, GetSet) {
   TestGetSet();
 }
 
+TEST_F(StringBasicImplTest, IncrDecr) {
+  TestIncrDecr();
+}
+
 TEST_F(StringTypedImplTest, GetSet) {
   TestGetSet();
 }
 
-TEST_F(StringBasicImplTest, IncrDecr) {
+TEST_F(StringTypedImplTest, IncrDecr) {
   TestIncrDecr();
 }
 

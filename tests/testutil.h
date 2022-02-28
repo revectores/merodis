@@ -10,6 +10,7 @@ namespace test {
 MATCHER(IsOK, "") { return arg.ok(); }
 MATCHER(IsNotFound, "") { return arg.IsNotFound(); }
 MATCHER(IsInvalidArgument, "") { return arg.IsInvalidArgument(); }
+MATCHER(IsNotSupported, "") { return arg.IsNotSupportedError(); }
 
 #define EXPECT_MERODIS_OK(expression) \
   EXPECT_THAT(expression, merodis::test::IsOK())
@@ -23,6 +24,10 @@ MATCHER(IsInvalidArgument, "") { return arg.IsInvalidArgument(); }
   EXPECT_THAT(expression, merodis::test::IsInvalidArgument())
 #define ASSERT_MERODIS_IS_INVALID_ARGUMENT(expression) \
   ASSERT_THAT(expression, merodis::test::IsInvalidArgument())
+#define EXPECT_MERODIS_IS_NOT_SUPPORTED(expression) \
+  EXPECT_THAT(expression, merodis::test::IsNotSupported())
+#define ASSERT_MERODIS_IS_NOT_SUPPORTED(expression) \
+  ASSERT_THAT(expression, merodis::test::IsNotSupported())
 
 #define LIST(...) \
   std::vector<std::string>({ __VA_ARGS__ })
