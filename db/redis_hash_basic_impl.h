@@ -31,8 +31,8 @@ struct HashNodeKey {
     data_[keySize_] = '\0';
     memcpy(data_.data() + keySize_ + 1, hashKey.data(), hashKeySize_);
   };
-  explicit HashNodeKey(const Slice& rawHashNodeKey, size_t keySize_) noexcept :
-    keySize_(keySize_),
+  explicit HashNodeKey(const Slice& rawHashNodeKey, size_t keySize) noexcept :
+    keySize_(keySize),
     hashKeySize_(rawHashNodeKey.size() - keySize_ - 1),
     data_(rawHashNodeKey.ToString()) {
   }

@@ -230,5 +230,20 @@ Status Merodis::HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t
 }
 
 // Set Operators
+Status Merodis::SCard(const Slice& key, uint64_t* len) {
+  return set_db_->SCard(key, len);
+}
+
+Status Merodis::SIsMember(const Slice& key, const Slice& setKey, bool* isMember) {
+  return set_db_->SIsMember(key, setKey, isMember);
+}
+
+Status Merodis::SAdd(const Slice& key, const Slice& setKey, uint64_t* count) {
+  return set_db_->SAdd(key, setKey, count);
+}
+
+Status Merodis::SAdd(const Slice& key, const std::vector<Slice>& keys, uint64_t* count) {
+  return set_db_->SAdd(key, keys, count);
+}
 
 }

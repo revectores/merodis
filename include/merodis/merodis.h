@@ -118,6 +118,10 @@ public:
   Status HDel(const Slice& key, const std::set<Slice>& hashKeys, uint64_t* count);
 
   // Set Operators
+  Status SCard(const Slice& key, uint64_t* len);
+  Status SIsMember(const Slice& key, const Slice& setKey, bool* isMember);
+  Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count);
+  Status SAdd(const Slice& key, const std::vector<Slice>& keys, uint64_t* count);
 
 private:
   RedisString* string_db_;
