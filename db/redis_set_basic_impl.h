@@ -58,6 +58,7 @@ public:
   Status SCard(const Slice& key, uint64_t* len) final;
   Status SIsMember(const Slice& key, const Slice& setKey, bool* isMember) final;
   Status SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers) final;
+  Status SMembers(const Slice& key, std::vector<std::string>* keys) final;
   Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count) final;
   Status SAdd(const Slice& key, const std::set<Slice>& keys, uint64_t* count) final;
 

@@ -61,6 +61,24 @@ Status RedisSetBasicImpl::SMIsMember(const Slice& key,
   return Status::OK();
 }
 
+Status RedisSetBasicImpl::SMembers(const Slice& key,
+                                   std::vector<std::string>* keys) {
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid() || iter->key() != key) {
+    delete iter;
+    return Status::OK();
+  };
+  iter->Next();
+  for (; iter->Valid(); iter->Next()) {
+    if (iter->key().size() <= key.size() || iter->key()[key.size()] != 0) break;
+    SetNodeKey nodeKey(iter->key(), key.size());
+    keys->push_back(nodeKey.setKey().ToString());
+  }
+  delete iter;
+  return Status::OK();
+}
+
 Status RedisSetBasicImpl::SAdd(const Slice& key,
                                const Slice& setKey,
                                uint64_t* count) {
