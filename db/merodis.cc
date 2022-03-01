@@ -246,6 +246,10 @@ Status Merodis::SMembers(const Slice& key, std::vector<std::string>* keys) {
   return set_db_->SMembers(key, keys);
 }
 
+Status Merodis::SRandMember(const Slice& key, std::string* member) {
+  return set_db_->SRandMember(key, member);
+}
+
 Status Merodis::SAdd(const Slice& key, const Slice& setKey, uint64_t* count) {
   return set_db_->SAdd(key, setKey, count);
 }

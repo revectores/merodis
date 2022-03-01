@@ -1,5 +1,6 @@
 #include "redis_set_basic_impl.h"
 
+#include <random>
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 
@@ -75,6 +76,31 @@ Status RedisSetBasicImpl::SMembers(const Slice& key,
     SetNodeKey nodeKey(iter->key(), key.size());
     keys->push_back(nodeKey.setKey().ToString());
   }
+  delete iter;
+  return Status::OK();
+}
+
+Status RedisSetBasicImpl::SRandMember(const Slice& key,
+                                      std::string* member) {
+  std::string rawSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawSetMetaValue);
+  if (!s.ok()) return s;
+  SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(0, metaValue.len - 1);
+  uint64_t index = dist(gen);
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  iter->Next();
+  while (index--) {
+    assert(iter->Valid());
+    iter->Next();
+  }
+  SetNodeKey nodeKey(iter->key(), key.size());
+  *member = nodeKey.setKey().ToString();
   delete iter;
   return Status::OK();
 }
