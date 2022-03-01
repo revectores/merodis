@@ -29,11 +29,17 @@ public:
     EXPECT_MERODIS_OK(db.SAdd(key, setKey, &count));
     return count;
   }
+  uint64_t SAdd(const Slice& key, const std::set<Slice>& keys) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SAdd(key, keys, &count));
+    return count;
+  }
 
   uint64_t SCard() { return SCard(key_); }
   bool SIsMember(const Slice& setKey) { return SIsMember(key_, setKey); }
   std::vector<bool> SMIsMember(const std::set<Slice>& keys) { return SMIsMember(key_, keys); }
   uint64_t SAdd(const Slice& setKey) { return SAdd(key_, setKey); }
+  uint64_t SAdd(const std::set<Slice>& keys) { return SAdd(key_, keys); }
 
   virtual void TestSAdd();
 
@@ -60,6 +66,10 @@ void SetTest::TestSAdd() {
   ASSERT_EQ(SIsMember("k1"), true);
   ASSERT_EQ(SIsMember("k2"), false);
   ASSERT_EQ(SMIsMember({"k0", "k1", "k2"}), BOOLEANS(true, true, false));
+  ASSERT_EQ(SAdd({"k0", "k1", "k2"}), 1);
+  ASSERT_EQ(SIsMember("k2"), true);
+  ASSERT_EQ(SAdd({"k3", "k4"}), 2);
+  ASSERT_EQ(SMIsMember({"k3", "k4", "k5"}), BOOLEANS(true, true, false));
 }
 
 TEST_F(SetBasicImplTest, SAdd) {

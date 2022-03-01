@@ -81,15 +81,47 @@ Status RedisSetBasicImpl::SAdd(const Slice& key,
 }
 
 Status RedisSetBasicImpl::SAdd(const Slice& key,
-                               const std::vector<Slice>& setKey,
+                               const std::set<Slice>& keys,
                                uint64_t* count) {
   std::string rawSetMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawSetMetaValue);
   SetMetaValue metaValue;
   if (s.ok()) metaValue = SetMetaValue(rawSetMetaValue);
   WriteBatch updates;
+  *count = 0;
 
-  return Status::OK();
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  iter->Next();
+  std::set<Slice>::const_iterator updatesIter = keys.cbegin();
+  while (iter->Valid() && updatesIter != keys.cend()) {
+    int cmp = updatesIter->compare({iter->key().data() + key.size() + 1,
+                                    iter->key().size() - key.size() - 1});
+    if (cmp == 0) {
+      ++updatesIter;
+      iter->Next();
+    } else if (cmp > 0) {
+      iter->Next();
+    } else {
+      ++updatesIter;
+      SetNodeKey nodeKey(key, *updatesIter);
+      updates.Put(nodeKey.Encode(), "");
+      *count += 1;
+    }
+  }
+  while (updatesIter != keys.cend()) {
+    SetNodeKey nodeKey(key, *updatesIter);
+    updates.Put(nodeKey.Encode(), "");
+    updatesIter++;
+    *count += 1;
+  }
+  delete iter;
+
+  if (*count) {
+    metaValue.len += *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey) {

@@ -246,7 +246,7 @@ Status Merodis::SAdd(const Slice& key, const Slice& setKey, uint64_t* count) {
   return set_db_->SAdd(key, setKey, count);
 }
 
-Status Merodis::SAdd(const Slice& key, const std::vector<Slice>& keys, uint64_t* count) {
+Status Merodis::SAdd(const Slice& key, const std::set<Slice>& keys, uint64_t* count) {
   return set_db_->SAdd(key, keys, count);
 }
 
