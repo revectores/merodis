@@ -238,6 +238,10 @@ Status Merodis::SIsMember(const Slice& key, const Slice& setKey, bool* isMember)
   return set_db_->SIsMember(key, setKey, isMember);
 }
 
+Status Merodis::SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers) {
+  return set_db_->SMIsMember(key, keys, isMembers);
+}
+
 Status Merodis::SAdd(const Slice& key, const Slice& setKey, uint64_t* count) {
   return set_db_->SAdd(key, setKey, count);
 }

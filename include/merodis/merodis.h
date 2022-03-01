@@ -120,6 +120,7 @@ public:
   // Set Operators
   Status SCard(const Slice& key, uint64_t* len);
   Status SIsMember(const Slice& key, const Slice& setKey, bool* isMember);
+  Status SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers);
   Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count);
   Status SAdd(const Slice& key, const std::vector<Slice>& keys, uint64_t* count);
 

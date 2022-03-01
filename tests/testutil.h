@@ -33,9 +33,10 @@ MATCHER(IsNotSupported, "") { return arg.IsNotSupportedError(); }
   std::vector<std::string>({ __VA_ARGS__ })
 #define UINTS(...) \
   std::vector<uint64_t>({ __VA_ARGS__ })
+#define BOOLEANS(...) \
+  std::vector<bool>({ __VA_ARGS__ })
 #define KVS(...) \
   (std::map<std::string, std::string>({ __VA_ARGS__ }))
-
 }
 }
 
