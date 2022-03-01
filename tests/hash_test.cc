@@ -85,6 +85,7 @@ public:
   virtual void TestHKeys();
   virtual void TestHVals();
   virtual void TestHDel();
+  virtual void TestMultipleKeys();
 
 private:
   Slice key_;
@@ -190,6 +191,13 @@ void HashTest::TestHDel() {
   ASSERT_EQ(HKeys(), LIST());
 }
 
+void HashTest::TestMultipleKeys() {
+  HSet("k1", {{"0", "0"}, {"1", "1"}});
+  ASSERT_EQ(HGetAll("k0"), KVS());
+  ASSERT_EQ(HKeys("k0"), LIST());
+  ASSERT_EQ(HVals("k0"), LIST());
+}
+
 TEST_F(HashBasicImplTest, HSet) {
   TestHSet();
 }
@@ -220,6 +228,10 @@ TEST_F(HashBasicImplTest, HVals) {
 
 TEST_F(HashBasicImplTest, HDel) {
   TestHDel();
+}
+
+TEST_F(HashBasicImplTest, MultipleKeys) {
+  TestMultipleKeys();
 }
 
 }

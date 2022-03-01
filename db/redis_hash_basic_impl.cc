@@ -51,7 +51,7 @@ Status RedisHashBasicImpl::HMGet(const Slice& key,
 Status RedisHashBasicImpl::HGetAll(const Slice& key, std::map<std::string, std::string>* kvs) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
-  if (!iter->Valid()) {
+  if (!iter->Valid() || iter->key() != key) {
     delete iter;
     return Status::OK();
   }
@@ -68,7 +68,7 @@ Status RedisHashBasicImpl::HGetAll(const Slice& key, std::map<std::string, std::
 Status RedisHashBasicImpl::HKeys(const Slice& key, std::vector<std::string>* keys) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
-  if (!iter->Valid()) {
+  if (!iter->Valid() || iter->key() != key) {
     delete iter;
     return Status::OK();
   }
@@ -85,7 +85,7 @@ Status RedisHashBasicImpl::HKeys(const Slice& key, std::vector<std::string>* key
 Status RedisHashBasicImpl::HVals(const Slice& key, std::vector<std::string>* values) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
-  if (!iter->Valid()) {
+  if (!iter->Valid() || iter->key() != key) {
     delete iter;
     return Status::OK();
   }
