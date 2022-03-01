@@ -108,24 +108,27 @@ Status RedisSetBasicImpl::SAdd(const Slice& key,
   WriteBatch updates;
   *count = 0;
 
-  Iterator* iter = db_->NewIterator(ReadOptions());
-  iter->Seek(key);
-  iter->Next();
   std::set<Slice>::const_iterator updatesIter = keys.cbegin();
-  while (iter->Valid() && updatesIter != keys.cend()) {
-    int cmp = updatesIter->compare({iter->key().data() + key.size() + 1,
-                                    iter->key().size() - key.size() - 1});
-    if (cmp == 0) {
-      ++updatesIter;
-      iter->Next();
-    } else if (cmp > 0) {
-      iter->Next();
-    } else {
-      ++updatesIter;
-      SetNodeKey nodeKey(key, *updatesIter);
-      updates.Put(nodeKey.Encode(), "");
-      *count += 1;
+  if (metaValue.len) {
+    Iterator* iter = db_->NewIterator(ReadOptions());
+    iter->Seek(key);
+    iter->Next();
+    while (iter->Valid() && updatesIter != keys.cend()) {
+      int cmp = updatesIter->compare({iter->key().data() + key.size() + 1,
+                                      iter->key().size() - key.size() - 1});
+      if (cmp == 0) {
+        ++updatesIter;
+        iter->Next();
+      } else if (cmp > 0) {
+        iter->Next();
+      } else {
+        ++updatesIter;
+        SetNodeKey nodeKey(key, *updatesIter);
+        updates.Put(nodeKey.Encode(), "");
+        *count += 1;
+      }
     }
+    delete iter;
   }
   while (updatesIter != keys.cend()) {
     SetNodeKey nodeKey(key, *updatesIter);
@@ -133,7 +136,6 @@ Status RedisSetBasicImpl::SAdd(const Slice& key,
     updatesIter++;
     *count += 1;
   }
-  delete iter;
 
   if (*count) {
     metaValue.len += *count;
