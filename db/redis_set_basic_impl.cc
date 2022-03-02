@@ -1,5 +1,6 @@
 #include "redis_set_basic_impl.h"
 
+#include <queue>
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
 #include "util/random.h"
@@ -349,7 +350,41 @@ Status RedisSetBasicImpl::SMove(const Slice& srcKey,
 }
 
 Status RedisSetBasicImpl::SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) {
-  return Status::NotSupported("");
+  std::map<Iterator*, Slice> iter2key;
+
+  auto cmp = [&iter2key](Iterator* iter1, Iterator* iter2) {
+    Slice key1 = iter2key[iter1];
+    Slice key2 = iter2key[iter2];
+    Slice member1(iter1->key().data() + key1.size() + 1, iter1->key().size() - key1.size() - 1);
+    Slice member2(iter2->key().data() + key2.size() + 1, iter2->key().size() - key2.size() - 1);
+    return member2 < member1;
+  };
+
+  std::priority_queue<Iterator*, std::vector<Iterator*>, decltype(cmp)> iters(cmp);
+  for (const auto& key: keys) {
+    Iterator* iter = db_->NewIterator(ReadOptions());
+    iter->Seek(key);
+    iter->Next();
+    iter2key[iter] = key;
+    iters.push(iter);
+  }
+
+  while (!iters.empty()) {
+    Iterator* top = iters.top();
+    iters.pop();
+    Slice topKey = iter2key[top];
+    SetNodeKey nodeKey(top->key(), topKey.size());
+    std::string newMember = nodeKey.setKey().ToString();
+    if (members->empty() || members->back() != newMember) {
+      members->push_back(newMember);
+    }
+    top->Next();
+    if (top->Valid() && IsMemberKey(top->key(), topKey.size())) {
+      iters.push(top);
+    }
+  }
+  for (const auto& [iter, _]: iter2key) delete iter;
+  return Status::OK();
 }
 
 Status RedisSetBasicImpl::SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) {
@@ -377,6 +412,10 @@ uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNode
   std::string _;
   Status s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
   return s.ok();
+}
+
+bool RedisSetBasicImpl::IsMemberKey(const Slice& iterKey, uint64_t keySize) {
+  return iterKey.size() > keySize && iterKey[keySize] == 0;
 }
 
 

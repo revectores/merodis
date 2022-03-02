@@ -77,6 +77,7 @@ public:
 
 private:
   uint64_t CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey);
+  static bool IsMemberKey(const Slice& iterKey, uint64_t keySize);
 };
 
 }

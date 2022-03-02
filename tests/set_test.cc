@@ -283,6 +283,15 @@ void SetTest::TestSMove() {
 }
 
 void SetTest::TestUnion() {
+  ASSERT_EQ(SAdd("s1", {"0", "1"}), 2);
+  ASSERT_EQ(SAdd("s2", {"1", "2"}), 2);
+  ASSERT_EQ(SAdd("s3", {"0", "3"}), 2);
+  ASSERT_EQ(SAdd("s4", {"0", "1", "2"}), 3);
+  ASSERT_EQ(SUnion({"s1", "s2"}), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnion({"s2", "s3"}), LIST("0", "1", "2", "3"));
+  ASSERT_EQ(SUnion({"s1", "s4"}), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnion({"s2", "s4"}), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnion({"s3", "s4"}), LIST("0", "1", "2", "3"));
 }
 
 void SetTest::TestInter() {
