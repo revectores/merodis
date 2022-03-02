@@ -165,21 +165,34 @@ void SetTest::TestSRem() {
 
 void SetTest::TestSPop() {
   Status s;
-  std::set<Slice> members = {"k0", "k1", "k2"};
-  ASSERT_EQ(SAdd(members), 3);
-
   std::string member;
+  std::vector<std::string> members;
+  std::set<Slice> keys = {"k0", "k1", "k2"};
+  ASSERT_EQ(SAdd(keys), 3);
+
   for (int c = 3; c > 0; c--) {
     ASSERT_EQ(SCard(), c);
     member = SPop();
     ASSERT_EQ(SCard(), c - 1);
     ASSERT_FALSE(SIsMember(member));
-    ASSERT_TRUE(members.find(member) != members.end());
+    ASSERT_TRUE(keys.find(member) != keys.end());
   }
   s = db.SPop("key", &member);
   ASSERT_MERODIS_IS_NOT_FOUND(s);
   ASSERT_EQ(s.ToString(), "NotFound: empty set");
   ASSERT_EQ(SCard(), 0);
+
+  ASSERT_EQ(SAdd(keys), 3);
+  ASSERT_EQ(SCard(), 3);
+  members = SPop(2);
+  ASSERT_EQ(members.size(), 2);
+  ASSERT_EQ(SCard(), 1);
+  for (const auto& m: members) ASSERT_FALSE(SIsMember(m));
+
+  members = SPop(2);
+  ASSERT_EQ(members.size(), 1);
+  ASSERT_EQ(SCard(), 0);
+  for (const auto& m: members) ASSERT_FALSE(SIsMember(m));
 }
 
 void SetTest::TestSMove() {

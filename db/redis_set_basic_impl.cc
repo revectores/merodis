@@ -245,7 +245,23 @@ Status RedisSetBasicImpl::SPop(const Slice& key,
 Status RedisSetBasicImpl::SPop(const Slice& key,
                                uint64_t count,
                                std::vector<std::string>* members) {
-  return Status::NotSupported("");
+  std::string rawSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawSetMetaValue);
+  if (!s.ok()) return s;
+  SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
+
+  s = SRandMember(key, (int64_t)count, members);
+  if (!s.ok()) return s;
+
+  WriteBatch updates;
+  assert(metaValue.len >= members->size());
+  metaValue.len -= members->size();
+  updates.Put(key, metaValue.Encode());
+  for (const auto& member: *members) {
+    SetNodeKey nodeKey(key, member);
+    updates.Delete(nodeKey.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisSetBasicImpl::SMove(const Slice& srcKey,
