@@ -215,7 +215,26 @@ Status RedisSetBasicImpl::SAdd(const Slice& key,
 Status RedisSetBasicImpl::SRem(const Slice& key,
                                const Slice& member,
                                uint64_t* count) {
-  return Status::NotSupported("");
+  std::string rawSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawSetMetaValue);
+  if (!s.ok()) return s;
+  SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
+
+  SetNodeKey nodeKey(key, member);
+  std::string _;
+  s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
+  if (!s.ok() && !s.IsNotFound()) return s;
+  if (s.IsNotFound()) {
+    *count = 0;
+    return Status::OK();
+  }
+
+  WriteBatch updates;
+  *count = 1;
+  metaValue.len -= 1;
+  updates.Put(key, metaValue.Encode());
+  updates.Delete(nodeKey.Encode());
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisSetBasicImpl::SRem(const Slice& key,

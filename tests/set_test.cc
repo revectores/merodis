@@ -161,6 +161,13 @@ void SetTest::TestSRandMember() {
 }
 
 void SetTest::TestSRem() {
+  ASSERT_EQ(SAdd({"k0", "k1", "k2"}), 3);
+  ASSERT_EQ(SRem("kk"), 0);
+  ASSERT_EQ(SCard(), 3);
+  ASSERT_EQ(SRem("k0"), 1);
+  ASSERT_EQ(SCard(), 2);
+  ASSERT_EQ(SRem("k0"), 0);
+  ASSERT_EQ(SCard(), 2);
 }
 
 void SetTest::TestSPop() {
