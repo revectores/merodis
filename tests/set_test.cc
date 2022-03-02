@@ -168,6 +168,16 @@ void SetTest::TestSRem() {
   ASSERT_EQ(SCard(), 2);
   ASSERT_EQ(SRem("k0"), 0);
   ASSERT_EQ(SCard(), 2);
+  ASSERT_EQ(SRem("k1"), 1);
+  ASSERT_EQ(SRem("k2"), 1);
+
+  ASSERT_EQ(SAdd({"k0", "k1", "k2"}), 3);
+  ASSERT_EQ(SRem({"k0", "k2"}), 2);
+  ASSERT_EQ(SCard(), 1);
+  ASSERT_EQ(SRem({"k1", "k2", "kk"}), 1);
+  ASSERT_EQ(SCard(), 0);
+  ASSERT_EQ(SRem({"k0", "k1", "k2"}), 0);
+  ASSERT_EQ(SCard(), 0);
 }
 
 void SetTest::TestSPop() {
