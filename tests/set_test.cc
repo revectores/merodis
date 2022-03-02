@@ -1,3 +1,4 @@
+#include <vector>
 #include "gtest/gtest.h"
 #include "merodis/merodis.h"
 #include "common.h"
@@ -34,6 +35,11 @@ public:
     EXPECT_MERODIS_OK(db.SRandMember(key, &member));
     return member;
   }
+  std::vector<std::string> SRandMember(const Slice& key, int64_t count) {
+    std::vector<std::string> members;
+    EXPECT_MERODIS_OK(db.SRandMember(key, count, &members));
+    return members;
+  }
   uint64_t SAdd(const Slice& key, const Slice& setKey) {
     uint64_t count;
     EXPECT_MERODIS_OK(db.SAdd(key, setKey, &count));
@@ -50,6 +56,7 @@ public:
   std::vector<bool> SMIsMember(const std::set<Slice>& keys) { return SMIsMember(key_, keys); }
   std::vector<std::string> SMembers() { return SMembers(key_); }
   std::string SRandMember() {return SRandMember(key_); }
+  std::vector<std::string> SRandMember(int64_t count) { return SRandMember(key_, count); }
   uint64_t SAdd(const Slice& setKey) { return SAdd(key_, setKey); }
   uint64_t SAdd(const std::set<Slice>& keys) { return SAdd(key_, keys); }
 
@@ -91,8 +98,34 @@ void SetTest::TestSAdd() {
 }
 
 void SetTest::TestSRandMember() {
-  ASSERT_EQ(SAdd({"k0", "k1", "k2", "k3"}), 4);
+  ASSERT_EQ(SAdd({"k0", "k1", "k2"}), 3);
   ASSERT_EQ(SIsMember(SRandMember()), true);
+
+  std::vector<int64_t> counts;
+
+  counts = {-4, -3, -2, -1};
+  for (auto count: counts) {
+    std::vector<std::string> members = SRandMember(count);
+    for (const auto& member: members) ASSERT_TRUE(SIsMember(member));
+    ASSERT_EQ(members.size(), abs(count));
+  }
+
+  counts = {1, 2};
+  for (auto count: counts) {
+    std::vector<std::string> members = SRandMember(count);
+    std::set<std::string> memberSet(members.begin(), members.end());
+    for (const auto& member: members) ASSERT_TRUE(SIsMember(member));
+    ASSERT_EQ(members.size(), count);
+    ASSERT_EQ(members.size(), memberSet.size());
+  }
+
+  counts = {3, 4};
+  for (auto count: counts) {
+    std::vector<std::string> members = SRandMember(count);
+    std::set<std::string> memberSet(members.begin(), members.end());
+    ASSERT_EQ(members.size(), SCard());
+    ASSERT_EQ(memberSet, SET("k0", "k1", "k2"));
+  }
 }
 
 TEST_F(SetBasicImplTest, SAdd) {

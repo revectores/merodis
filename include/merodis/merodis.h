@@ -123,6 +123,7 @@ public:
   Status SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers);
   Status SMembers(const Slice& key, std::vector<std::string>* keys);
   Status SRandMember(const Slice& key, std::string* member);
+  Status SRandMember(const Slice& key, int64_t count, std::vector<std::string>* members);
   Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count);
   Status SAdd(const Slice& key, const std::set<Slice>& keys, uint64_t* count);
 

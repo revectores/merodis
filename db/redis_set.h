@@ -16,6 +16,7 @@ public:
   virtual Status SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers) = 0;
   virtual Status SMembers(const Slice& key, std::vector<std::string>* keys) = 0;
   virtual Status SRandMember(const Slice& key, std::string* member) = 0;
+  virtual Status SRandMember(const Slice& key, int64_t count, std::vector<std::string>* members) = 0;
   virtual Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count) = 0;
   virtual Status SAdd(const Slice& key, const std::set<Slice>& setKey, uint64_t* count) = 0;
 };

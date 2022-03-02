@@ -31,6 +31,8 @@ MATCHER(IsNotSupported, "") { return arg.IsNotSupportedError(); }
 
 #define LIST(...) \
   std::vector<std::string>({ __VA_ARGS__ })
+#define SET(...) \
+  std::set<std::string>({ __VA_ARGS__ })
 #define UINTS(...) \
   std::vector<uint64_t>({ __VA_ARGS__ })
 #define BOOLEANS(...) \

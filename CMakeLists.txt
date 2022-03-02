@@ -41,6 +41,7 @@ target_sources(merodis PRIVATE
   db/layout.h
   util/coding.h
   util/number.h
+  util/random.h
   util/sequence.cc
   util/sequence.h
   util/variant_helper.h
