@@ -63,6 +63,11 @@ public:
   Status SRandMember(const Slice& key, int64_t count, std::vector<std::string>* members) final;
   Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count) final;
   Status SAdd(const Slice& key, const std::set<Slice>& keys, uint64_t* count) final;
+  Status SRem(const Slice& key, const Slice& member, uint64_t* count) final;
+  Status SRem(const Slice& key, const std::set<Slice>& members, uint64_t* count) final;
+  Status SPop(const Slice& key, std::string* member) final;
+  Status SPop(const Slice& key, uint64_t count, std::vector<std::string>* members) final;
+  Status SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member, uint64_t* count) final;
 
 private:
   uint64_t CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey);

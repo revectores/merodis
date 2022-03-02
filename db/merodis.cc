@@ -262,4 +262,25 @@ Status Merodis::SAdd(const Slice& key, const std::set<Slice>& keys, uint64_t* co
   return set_db_->SAdd(key, keys, count);
 }
 
+Status Merodis::SRem(const Slice& key, const Slice& member, uint64_t* count) {
+  return set_db_->SRem(key, member, count);
+}
+
+Status Merodis::SRem(const Slice& key, const std::set<Slice>& members, uint64_t* count) {
+  return set_db_->SRem(key, members, count);
+}
+
+Status Merodis::SPop(const Slice& key, std::string* member) {
+  return set_db_->SPop(key, member);
+}
+
+Status Merodis::SPop(const Slice& key, uint64_t count, std::vector<std::string>* members) {
+  return set_db_->SPop(key, count, members);
+}
+
+Status Merodis::SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member, uint64_t* count) {
+  return set_db_->SMove(srcKey, dstKey, member, count);
+}
+
+
 }

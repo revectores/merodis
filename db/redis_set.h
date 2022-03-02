@@ -19,6 +19,11 @@ public:
   virtual Status SRandMember(const Slice& key, int64_t count, std::vector<std::string>* members) = 0;
   virtual Status SAdd(const Slice& key, const Slice& setKey, uint64_t* count) = 0;
   virtual Status SAdd(const Slice& key, const std::set<Slice>& setKey, uint64_t* count) = 0;
+  virtual Status SRem(const Slice& key, const Slice& member, uint64_t* count) = 0;
+  virtual Status SRem(const Slice& key, const std::set<Slice>& members, uint64_t* count) = 0;
+  virtual Status SPop(const Slice& key, std::string* member) = 0;
+  virtual Status SPop(const Slice& key, uint64_t count, std::vector<std::string>* members) = 0;
+  virtual Status SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member, uint64_t* count) = 0;
 };
 
 }

@@ -211,6 +211,36 @@ Status RedisSetBasicImpl::SAdd(const Slice& key,
   return db_->Write(WriteOptions(), &updates);
 }
 
+Status RedisSetBasicImpl::SRem(const Slice& key,
+                               const Slice& member,
+                               uint64_t* count) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SRem(const Slice& key,
+                               const std::set<Slice>& members,
+                               uint64_t* count) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SPop(const Slice& key,
+                               std::string* member) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SPop(const Slice& key,
+                               uint64_t count,
+                               std::vector<std::string>* members) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SMove(const Slice& srcKey,
+                                const Slice& dstKey,
+                                const Slice& member,
+                                uint64_t* count) {
+  return Status::NotSupported("");
+}
+
 uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey) {
   std::string _;
   Status s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);

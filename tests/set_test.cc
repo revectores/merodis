@@ -50,6 +50,31 @@ public:
     EXPECT_MERODIS_OK(db.SAdd(key, keys, &count));
     return count;
   }
+  uint64_t SRem(const Slice& key, const Slice& member) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SRem(key, member, &count));
+    return count;
+  }
+  uint64_t SRem(const Slice& key, const std::set<Slice>& members) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SRem(key, members, &count));
+    return count;
+  }
+  std::string SPop(const Slice& key) {
+    std::string member;
+    EXPECT_MERODIS_OK(db.SPop(key, &member));
+    return member;
+  }
+  std::vector<std::string> SPop(const Slice& key, uint64_t count) {
+    std::vector<std::string> members;
+    EXPECT_MERODIS_OK(db.SPop(key, count, &members));
+    return members;
+  }
+  uint64_t SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SMove(srcKey, dstKey, member, &count));
+    return count;
+  }
 
   uint64_t SCard() { return SCard(key_); }
   bool SIsMember(const Slice& setKey) { return SIsMember(key_, setKey); }
@@ -59,9 +84,16 @@ public:
   std::vector<std::string> SRandMember(int64_t count) { return SRandMember(key_, count); }
   uint64_t SAdd(const Slice& setKey) { return SAdd(key_, setKey); }
   uint64_t SAdd(const std::set<Slice>& keys) { return SAdd(key_, keys); }
+  uint64_t SRem(const Slice& member) { return SRem(key_, member); }
+  uint64_t SRem(const std::set<Slice>& members) { return SRem(key_, members); }
+  std::string SPop() { return SPop(key_); }
+  std::vector<std::string> SPop(uint64_t count) { return SPop(key_, count); }
 
   virtual void TestSAdd();
   virtual void TestSRandMember();
+  virtual void TestSRem();
+  virtual void TestSPop();
+  virtual void TestSMove();
 
 private:
   Slice key_;
@@ -128,12 +160,33 @@ void SetTest::TestSRandMember() {
   }
 }
 
+void SetTest::TestSRem() {
+}
+
+void SetTest::TestSPop() {
+}
+
+void SetTest::TestSMove() {
+}
+
 TEST_F(SetBasicImplTest, SAdd) {
   TestSAdd();
 }
 
 TEST_F(SetBasicImplTest, SRandMember) {
   TestSRandMember();
+}
+
+TEST_F(SetBasicImplTest, SRem) {
+  TestSRem();
+}
+
+TEST_F(SetBasicImplTest, SPop) {
+  TestSPop();
+}
+
+TEST_F(SetBasicImplTest, SMove) {
+  TestSMove();
 }
 
 }
