@@ -213,6 +213,40 @@ void SetTest::TestSPop() {
 }
 
 void SetTest::TestSMove() {
+  ASSERT_EQ(SAdd("s1", {"0", "1"}), 2);
+  ASSERT_EQ(SAdd("s2", {"1", "2"}), 2);
+
+  ASSERT_EQ(SMove("s1", "s2", "0"), 1);
+  ASSERT_EQ(SCard("s1"), 1);
+  ASSERT_EQ(SCard("s2"), 3);
+  ASSERT_EQ(SMembers("s1"), LIST("1"));
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1", "2"));
+
+  ASSERT_EQ(SMove("s1", "s2", "1"), 1);
+  ASSERT_EQ(SCard("s1"), 0);
+  ASSERT_EQ(SCard("s2"), 3);
+  ASSERT_EQ(SMembers("s1"), LIST());
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1", "2"));
+
+  ASSERT_EQ(SMove("s2", "s1", "2"), 1);
+  ASSERT_EQ(SCard("s1"), 1);
+  ASSERT_EQ(SCard("s2"), 2);
+  ASSERT_EQ(SMembers("s1"), LIST("2"));
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1"));
+
+  ASSERT_EQ(SMove("s2", "s1", "2"), 0);
+  ASSERT_EQ(SCard("s1"), 1);
+  ASSERT_EQ(SCard("s2"), 2);
+  ASSERT_EQ(SMembers("s1"), LIST("2"));
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1"));
+
+  ASSERT_EQ(SAdd("s2", "2"), 1);
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1", "2"));
+  ASSERT_EQ(SMove("s2", "s1", "2"), 1);
+  ASSERT_EQ(SCard("s1"), 1);
+  ASSERT_EQ(SCard("s2"), 2);
+  ASSERT_EQ(SMembers("s1"), LIST("2"));
+  ASSERT_EQ(SMembers("s2"), LIST("0", "1"));
 }
 
 TEST_F(SetBasicImplTest, SAdd) {

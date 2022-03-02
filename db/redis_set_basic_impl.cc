@@ -319,7 +319,33 @@ Status RedisSetBasicImpl::SMove(const Slice& srcKey,
                                 const Slice& dstKey,
                                 const Slice& member,
                                 uint64_t* count) {
-  return Status::NotSupported("");
+  std::string rawSetMetaValue;
+  Status s = db_->Get(ReadOptions(), srcKey, &rawSetMetaValue);
+  if (!s.ok()) return s;
+  SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
+  SetNodeKey nodeKey(srcKey, member);
+  std::string _;
+  s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
+  if (!s.ok() && !s.IsNotFound()) return s;
+  if (s.IsNotFound()) {
+    *count = 0;
+    return Status::OK();
+  }
+  WriteBatch updates;
+  *count = 1;
+  metaValue.len -= 1;
+  updates.Put(srcKey, metaValue.Encode());
+  updates.Delete(nodeKey.Encode());
+
+  s = db_->Get(ReadOptions(), dstKey, &rawSetMetaValue);
+  if (s.ok()) metaValue = SetMetaValue(rawSetMetaValue);
+  nodeKey = SetNodeKey(dstKey, member);
+  if (!CountKeyIntersection(dstKey, nodeKey)) {
+    metaValue.len += 1;
+    updates.Put(dstKey, metaValue.Encode());
+    updates.Put(nodeKey.Encode(), "");
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey) {
