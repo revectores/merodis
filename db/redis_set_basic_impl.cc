@@ -87,6 +87,7 @@ Status RedisSetBasicImpl::SRandMember(const Slice& key,
   if (!s.ok()) return s;
   SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
 
+  if (metaValue.len == 0) return Status::NotFound("empty set");
   uint64_t index = rand_uint64(0, metaValue.len - 1);
 
   Iterator* iter = db_->NewIterator(ReadOptions());
@@ -225,7 +226,20 @@ Status RedisSetBasicImpl::SRem(const Slice& key,
 
 Status RedisSetBasicImpl::SPop(const Slice& key,
                                std::string* member) {
-  return Status::NotSupported("");
+  std::string rawSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawSetMetaValue);
+  if (!s.ok()) return s;
+  SetMetaValue metaValue = SetMetaValue(rawSetMetaValue);
+
+  s = SRandMember(key, member);
+  if (!s.ok()) return s;
+
+  WriteBatch updates;
+  metaValue.len -= 1;
+  updates.Put(key, metaValue.Encode());
+  SetNodeKey nodeKey(key, *member);
+  updates.Delete(nodeKey.Encode());
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisSetBasicImpl::SPop(const Slice& key,
