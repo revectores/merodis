@@ -75,6 +75,36 @@ public:
     EXPECT_MERODIS_OK(db.SMove(srcKey, dstKey, member, &count));
     return count;
   }
+  std::vector<std::string> SUnion(const std::vector<Slice>& keys) {
+    std::vector<std::string> members;
+    EXPECT_MERODIS_OK(db.SUnion(keys, &members));
+    return members;
+  }
+  std::vector<std::string> SInter(const std::vector<Slice>& keys) {
+    std::vector<std::string> members;
+    EXPECT_MERODIS_OK(db.SInter(keys, &members));
+    return members;
+  }
+  std::vector<std::string> SDiff(const std::vector<Slice>& keys) {
+    std::vector<std::string> members;
+    EXPECT_MERODIS_OK(db.SDiff(keys, &members));
+    return members;
+  }
+  uint64_t SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SUnionStore(keys, dstKey, &count));
+    return count;
+  }
+  uint64_t SInterStore(const std::vector<Slice>& keys, const Slice& dstKey) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SInterStore(keys, dstKey, &count));
+    return count;
+  }
+  uint64_t SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey) {
+    uint64_t count;
+    EXPECT_MERODIS_OK(db.SDiffStore(keys, dstKey, &count));
+    return count;
+  }
 
   uint64_t SCard() { return SCard(key_); }
   bool SIsMember(const Slice& setKey) { return SIsMember(key_, setKey); }
@@ -94,6 +124,9 @@ public:
   virtual void TestSRem();
   virtual void TestSPop();
   virtual void TestSMove();
+  virtual void TestUnion();
+  virtual void TestInter();
+  virtual void TestDiff();
 
 private:
   Slice key_;
@@ -249,6 +282,15 @@ void SetTest::TestSMove() {
   ASSERT_EQ(SMembers("s2"), LIST("0", "1"));
 }
 
+void SetTest::TestUnion() {
+}
+
+void SetTest::TestInter() {
+}
+
+void SetTest::TestDiff() {
+}
+
 TEST_F(SetBasicImplTest, SAdd) {
   TestSAdd();
 }
@@ -267,6 +309,18 @@ TEST_F(SetBasicImplTest, SPop) {
 
 TEST_F(SetBasicImplTest, SMove) {
   TestSMove();
+}
+
+TEST_F(SetBasicImplTest, SUnion) {
+  TestUnion();
+}
+
+TEST_F(SetBasicImplTest, SInter) {
+  TestInter();
+}
+
+TEST_F(SetBasicImplTest, SDiff) {
+  TestDiff();
 }
 
 }

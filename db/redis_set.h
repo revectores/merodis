@@ -24,6 +24,12 @@ public:
   virtual Status SPop(const Slice& key, std::string* member) = 0;
   virtual Status SPop(const Slice& key, uint64_t count, std::vector<std::string>* members) = 0;
   virtual Status SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member, uint64_t* count) = 0;
+  virtual Status SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) = 0;
+  virtual Status SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) = 0;
+  virtual Status SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) = 0;
+  virtual Status SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) = 0;
+  virtual Status SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) = 0;
+  virtual Status SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) = 0;
 };
 
 }

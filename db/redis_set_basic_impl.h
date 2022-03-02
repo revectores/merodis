@@ -68,6 +68,12 @@ public:
   Status SPop(const Slice& key, std::string* member) final;
   Status SPop(const Slice& key, uint64_t count, std::vector<std::string>* members) final;
   Status SMove(const Slice& srcKey, const Slice& dstKey, const Slice& member, uint64_t* count) final;
+  Status SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) final;
+  Status SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) final;
+  Status SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) final;
+  Status SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
+  Status SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
+  Status SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
 
 private:
   uint64_t CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey);

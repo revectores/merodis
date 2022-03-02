@@ -282,5 +282,28 @@ Status Merodis::SMove(const Slice& srcKey, const Slice& dstKey, const Slice& mem
   return set_db_->SMove(srcKey, dstKey, member, count);
 }
 
+Status Merodis::SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return set_db_->SUnion(keys, members);
+}
+
+Status Merodis::SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return set_db_->SInter(keys, members);
+}
+
+Status Merodis::SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return set_db_->SDiff(keys, members);
+}
+
+Status Merodis::SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return set_db_->SUnionStore(keys, dstKey, count);
+}
+
+Status Merodis::SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return set_db_->SInterStore(keys, dstKey, count);
+}
+
+Status Merodis::SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return set_db_->SDiffStore(keys, dstKey, count);
+}
 
 }

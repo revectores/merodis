@@ -348,6 +348,31 @@ Status RedisSetBasicImpl::SMove(const Slice& srcKey,
   return db_->Write(WriteOptions(), &updates);
 }
 
+Status RedisSetBasicImpl::SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return Status::NotSupported("");
+}
+
+Status RedisSetBasicImpl::SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
+  return Status::NotSupported("");
+}
+
+
 uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey) {
   std::string _;
   Status s = db_->Get(ReadOptions(), nodeKey.Encode(), &_);
