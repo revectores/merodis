@@ -11,6 +11,23 @@ RedisSetBasicImpl::RedisSetBasicImpl() noexcept = default;
 
 RedisSetBasicImpl::~RedisSetBasicImpl() noexcept = default;
 
+Status RedisSetBasicImpl::Del(const Slice& key) {
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid() || iter->key() != key) {
+    delete iter;
+    return Status::OK();
+  }
+
+  WriteBatch updates;
+  updates.Delete(iter->key());
+  for (iter->Next(); iter->Valid() && IsMemberKey(iter->key(), key.size()); iter->Next()) {
+    updates.Delete(iter->key());
+  }
+  delete iter;
+  return db_->Write(WriteOptions(), &updates);
+}
+
 Status RedisSetBasicImpl::SCard(const Slice& key,
                                 uint64_t* len) {
   std::string rawSetMetaValue;
@@ -396,7 +413,14 @@ Status RedisSetBasicImpl::SDiff(const std::vector<Slice>& keys, std::vector<std:
 }
 
 Status RedisSetBasicImpl::SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
-  return Status::NotSupported("");
+  Status s;
+  std::vector<std::string> members;
+  s = SUnion(keys, &members);
+  if (!s.ok()) return s;
+  s = Del(dstKey);
+  if (!s.ok()) return s;
+  std::set<Slice> memberSet(members.begin(), members.end());
+  return SAdd(dstKey, memberSet, count);
 }
 
 Status RedisSetBasicImpl::SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
@@ -417,6 +441,5 @@ uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNode
 bool RedisSetBasicImpl::IsMemberKey(const Slice& iterKey, uint64_t keySize) {
   return iterKey.size() > keySize && iterKey[keySize] == 0;
 }
-
 
 }

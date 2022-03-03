@@ -292,6 +292,11 @@ void SetTest::TestUnion() {
   ASSERT_EQ(SUnion({"s1", "s4"}), LIST("0", "1", "2"));
   ASSERT_EQ(SUnion({"s2", "s4"}), LIST("0", "1", "2"));
   ASSERT_EQ(SUnion({"s3", "s4"}), LIST("0", "1", "2", "3"));
+
+  ASSERT_EQ(SUnionStore({"s1", "s2"}, "u"), 3);
+  ASSERT_EQ(SMembers("u"), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnionStore({"s1", "s2"}, "s1"), 3);
+  ASSERT_EQ(SMembers("s1"), LIST("0", "1", "2"));
 }
 
 void SetTest::TestInter() {

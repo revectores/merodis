@@ -55,6 +55,8 @@ public:
   RedisSetBasicImpl() noexcept;
   ~RedisSetBasicImpl() noexcept final;
 
+  Status Del(const Slice& key);
+
   Status SCard(const Slice& key, uint64_t* len) final;
   Status SIsMember(const Slice& key, const Slice& setKey, bool* isMember) final;
   Status SMIsMember(const Slice& key, const std::set<Slice>& keys, std::vector<bool>* isMembers) final;
