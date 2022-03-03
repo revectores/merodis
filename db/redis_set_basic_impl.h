@@ -6,6 +6,22 @@
 
 namespace merodis {
 
+class SetIteratorComparator {
+public:
+  explicit SetIteratorComparator(std::map<Iterator*, Slice>& iter2key): iter2key(iter2key) {}
+
+  bool operator()(Iterator* iter1, Iterator* iter2) {
+    Slice key1 = iter2key[iter1];
+    Slice key2 = iter2key[iter2];
+    Slice member1(iter1->key().data() + key1.size() + 1, iter1->key().size() - key1.size() - 1);
+    Slice member2(iter2->key().data() + key2.size() + 1, iter2->key().size() - key2.size() - 1);
+    return member2 < member1;
+  };
+
+private:
+  std::map<Iterator*, Slice> iter2key;
+};
+
 struct SetMetaValue {
   explicit SetMetaValue() noexcept : len(0) {};
   explicit SetMetaValue(const std::string& rawValue) noexcept {

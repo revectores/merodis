@@ -368,22 +368,16 @@ Status RedisSetBasicImpl::SMove(const Slice& srcKey,
 
 Status RedisSetBasicImpl::SUnion(const std::vector<Slice>& keys, std::vector<std::string>* members) {
   std::map<Iterator*, Slice> iter2key;
-
-  auto cmp = [&iter2key](Iterator* iter1, Iterator* iter2) {
-    Slice key1 = iter2key[iter1];
-    Slice key2 = iter2key[iter2];
-    Slice member1(iter1->key().data() + key1.size() + 1, iter1->key().size() - key1.size() - 1);
-    Slice member2(iter2->key().data() + key2.size() + 1, iter2->key().size() - key2.size() - 1);
-    return member2 < member1;
-  };
-
-  std::priority_queue<Iterator*, std::vector<Iterator*>, decltype(cmp)> iters(cmp);
   for (const auto& key: keys) {
     Iterator* iter = db_->NewIterator(ReadOptions());
     iter->Seek(key);
     iter->Next();
     iter2key[iter] = key;
-    iters.push(iter);
+  }
+  SetIteratorComparator cmp(iter2key);
+  std::priority_queue<Iterator*, std::vector<Iterator*>, decltype(cmp)> iters(cmp);
+  for (const auto& [key, _]: iter2key) {
+    iters.push(key);
   }
 
   while (!iters.empty()) {
