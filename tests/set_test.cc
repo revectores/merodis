@@ -323,6 +323,11 @@ void SetTest::TestDiff() {
   ASSERT_EQ(SDiff({"s0", "s2"}), LIST("0", "1"));
   ASSERT_EQ(SDiff({"s0", "s3"}), LIST());
   ASSERT_EQ(SDiff({"s0", "s4"}), LIST("0", "1"));
+
+  ASSERT_EQ(SDiffStore({"s0", "s1"}, "u"), 1);
+  ASSERT_EQ(SMembers("u"), LIST("0"));
+  ASSERT_EQ(SDiffStore({"s0", "s1"}, "s0"), 1);
+  ASSERT_EQ(SMembers("s0"), LIST("0"));
 }
 
 TEST_F(SetBasicImplTest, SAdd) {
