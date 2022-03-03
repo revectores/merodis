@@ -371,8 +371,12 @@ Status RedisSetBasicImpl::SUnion(const std::vector<Slice>& keys, std::vector<std
   for (const auto& key: keys) {
     Iterator* iter = db_->NewIterator(ReadOptions());
     iter->Seek(key);
-    iter->Next();
-    iter2key[iter] = key;
+    if (iter->Valid() && iter->key() == key) {
+      iter->Next();
+      iter2key[iter] = key;
+    } else {
+      delete iter;
+    }
   }
   SetIteratorComparator cmp(iter2key);
   std::priority_queue<Iterator*, std::vector<Iterator*>, decltype(cmp)> iters(cmp);

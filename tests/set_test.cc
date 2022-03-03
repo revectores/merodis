@@ -283,20 +283,19 @@ void SetTest::TestSMove() {
 }
 
 void SetTest::TestUnion() {
-  ASSERT_EQ(SAdd("s1", {"0", "1"}), 2);
-  ASSERT_EQ(SAdd("s2", {"1", "2"}), 2);
-  ASSERT_EQ(SAdd("s3", {"0", "3"}), 2);
-  ASSERT_EQ(SAdd("s4", {"0", "1", "2"}), 3);
-  ASSERT_EQ(SUnion({"s1", "s2"}), LIST("0", "1", "2"));
-  ASSERT_EQ(SUnion({"s2", "s3"}), LIST("0", "1", "2", "3"));
-  ASSERT_EQ(SUnion({"s1", "s4"}), LIST("0", "1", "2"));
-  ASSERT_EQ(SUnion({"s2", "s4"}), LIST("0", "1", "2"));
-  ASSERT_EQ(SUnion({"s3", "s4"}), LIST("0", "1", "2", "3"));
+  ASSERT_EQ(SAdd("s0", {"0", "1"}), 2);
+  ASSERT_EQ(SAdd("s1", {"1", "2"}), 2);
+  ASSERT_EQ(SAdd("s2", {"2", "3"}), 2);
+  ASSERT_EQ(SAdd("s3", {"0", "1", "2"}), 3);
+  ASSERT_EQ(SUnion({"s0", "s1"}), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnion({"s0", "s2"}), LIST("0", "1", "2", "3"));
+  ASSERT_EQ(SUnion({"s0", "s3"}), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnion({"s0", "s4"}), LIST("0", "1"));
 
-  ASSERT_EQ(SUnionStore({"s1", "s2"}, "u"), 3);
+  ASSERT_EQ(SUnionStore({"s0", "s1"}, "u"), 3);
   ASSERT_EQ(SMembers("u"), LIST("0", "1", "2"));
-  ASSERT_EQ(SUnionStore({"s1", "s2"}, "s1"), 3);
-  ASSERT_EQ(SMembers("s1"), LIST("0", "1", "2"));
+  ASSERT_EQ(SUnionStore({"s0", "s1"}, "s0"), 3);
+  ASSERT_EQ(SMembers("s0"), LIST("0", "1", "2"));
 }
 
 void SetTest::TestInter() {
