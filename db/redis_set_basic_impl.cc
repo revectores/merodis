@@ -399,7 +399,52 @@ Status RedisSetBasicImpl::SUnion(const std::vector<Slice>& keys, std::vector<std
 }
 
 Status RedisSetBasicImpl::SInter(const std::vector<Slice>& keys, std::vector<std::string>* members) {
-  return Status::NotSupported("");
+  std::map<Iterator*, Slice> iter2key;
+  for (const auto& key: keys) {
+    Iterator* iter = db_->NewIterator(ReadOptions());
+    iter->Seek(key);
+    if (!iter->Valid() || iter->key() != key) {
+      for (const auto& [k, _]: iter2key) {
+        delete k;
+      }
+      delete iter;
+      return Status::OK();
+    }
+    iter->Next();
+    iter2key[iter] = key;
+  }
+  SetIteratorComparator cmp(iter2key);
+  std::priority_queue<Iterator*, std::vector<Iterator*>, decltype(cmp)> iters(cmp);
+  for (const auto& [key, _]: iter2key) {
+    iters.push(key);
+  }
+
+  std::string currentMinMember;
+  uint64_t minMemberCounter = 0;
+
+  while (!iters.empty()) {
+    Iterator* top = iters.top();
+    iters.pop();
+    Slice topKey = iter2key[top];
+    SetNodeKey nodeKey(top->key(), topKey.size());
+    std::string minMember = nodeKey.setKey().ToString();
+    if (minMember == currentMinMember) {
+      minMemberCounter += 1;
+      if (minMemberCounter == keys.size()) {
+        members->push_back(minMember);
+      }
+    } else {
+      currentMinMember = minMember;
+      minMemberCounter = 1;
+    }
+
+    top->Next();
+    if (top->Valid() && IsMemberKey(top->key(), topKey.size())) {
+      iters.push(top);
+    }
+  }
+  for (const auto& [iter, _]: iter2key) delete iter;
+  return Status::OK();
 }
 
 Status RedisSetBasicImpl::SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) {

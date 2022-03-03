@@ -300,6 +300,14 @@ void SetTest::TestUnion() {
 }
 
 void SetTest::TestInter() {
+  ASSERT_EQ(SAdd("s0", {"0", "1"}), 2);
+  ASSERT_EQ(SAdd("s1", {"1", "2"}), 2);
+  ASSERT_EQ(SAdd("s2", {"2", "3"}), 2);
+  ASSERT_EQ(SAdd("s3", {"0", "1", "2"}), 3);
+  ASSERT_EQ(SInter({"s0", "s1"}), LIST("1"));
+  ASSERT_EQ(SInter({"s0", "s2"}), LIST());
+  ASSERT_EQ(SInter({"s0", "s3"}), LIST("0", "1"));
+  ASSERT_EQ(SInter({"s0", "s4"}), LIST());
 }
 
 void SetTest::TestDiff() {
