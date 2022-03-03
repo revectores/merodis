@@ -315,6 +315,14 @@ void SetTest::TestInter() {
 }
 
 void SetTest::TestDiff() {
+  ASSERT_EQ(SAdd("s0", {"0", "1"}), 2);
+  ASSERT_EQ(SAdd("s1", {"1", "2"}), 2);
+  ASSERT_EQ(SAdd("s2", {"2", "3"}), 2);
+  ASSERT_EQ(SAdd("s3", {"0", "1", "2"}), 3);
+  ASSERT_EQ(SDiff({"s0", "s1"}), LIST("0"));
+  ASSERT_EQ(SDiff({"s0", "s2"}), LIST("0", "1"));
+  ASSERT_EQ(SDiff({"s0", "s3"}), LIST());
+  ASSERT_EQ(SDiff({"s0", "s4"}), LIST("0", "1"));
 }
 
 TEST_F(SetBasicImplTest, SAdd) {

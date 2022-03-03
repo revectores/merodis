@@ -452,7 +452,47 @@ Status RedisSetBasicImpl::SInter(const std::vector<Slice>& keys, std::vector<std
 }
 
 Status RedisSetBasicImpl::SDiff(const std::vector<Slice>& keys, std::vector<std::string>* members) {
-  return Status::NotSupported("");
+  Iterator* baseIter = db_->NewIterator(ReadOptions());
+  Slice baseKey = keys.front();
+  baseIter->Seek(baseKey);
+  if (!baseIter->Valid() || baseIter->key() != baseKey) {
+    delete baseIter;
+    return Status::OK();
+  }
+  baseIter->Next();
+
+  std::map<Iterator*, Slice> iter2key;
+  for (auto it = std::next(keys.begin()); it != keys.end(); it++) {
+    Slice key = *it;
+    Iterator* iter = db_->NewIterator(ReadOptions());
+    iter->Seek(key);
+    if (iter->Valid() && iter->key() == key) {
+      iter->Next();
+      iter2key[iter] = key;
+    } else {
+      delete iter;
+    }
+  }
+
+  while (baseIter->Valid() && IsMemberKey(baseIter->key(), baseKey.size())) {
+    bool save = true;
+    Slice baseMember = GetMember(baseIter, baseKey.size());
+    for (const auto& [iter, key]: iter2key) {
+      SetNodeKey nodeKey(key, baseMember);
+      iter->Seek(nodeKey.Encode());
+      if (GetMember(iter, key.size()) == baseMember) {
+        save = false;
+        break;
+      }
+    }
+    if (save) members->push_back(baseMember.ToString());
+    baseIter->Next();
+  }
+  delete baseIter;
+  for (const auto& [iter, _]: iter2key) {
+    delete iter;
+  }
+  return Status::OK();
 }
 
 Status RedisSetBasicImpl::SUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
@@ -481,6 +521,10 @@ Status RedisSetBasicImpl::SDiffStore(const std::vector<Slice>& keys, const Slice
   return Status::NotSupported("");
 }
 
+
+Slice RedisSetBasicImpl::GetMember(Iterator* iter, uint64_t keySize) {
+  return Slice{iter->key().data() + keySize + 1, iter->key().size() - keySize - 1};
+}
 
 uint64_t RedisSetBasicImpl::CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey) {
   std::string _;
