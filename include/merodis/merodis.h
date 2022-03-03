@@ -23,6 +23,10 @@ inline bool operator<(const Slice& a, const Slice& b) {
 namespace merodis {
 
 typedef int64_t UserIndex;
+typedef std::string Member;
+typedef std::vector<Member> Members;
+typedef std::pair<std::string, int64_t> ScoredMember;
+typedef std::vector<ScoredMember> ScoredMembers;
 
 enum BeforeOrAfter {
   kBefore,
@@ -144,6 +148,45 @@ public:
   Status SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
 
   // ZSet Operators
+  Status ZCard(const Slice& key, uint64_t* len);
+  Status ZScore(const Slice& key, const Slice& member, int64_t* score);
+  Status ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores);
+  Status ZRank(const Slice& key, const Slice& member, uint64_t* rank);
+  Status ZRevRank(const Slice& key, const Slice& member, uint64_t* rank);
+  Status ZCount(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count);
+  Status ZLexCount(const Slice& key, const Slice& minLex, const Slice& maxLex, uint64_t* count);
+  Status ZRange(const Slice& key, int64_t minRank, int64_t maxRank, Members* members);
+  Status ZRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, Members* members);
+  Status ZRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, Members* members);
+  Status ZRangeWithScores(const Slice& key, int64_t minRank, int64_t maxRank, ScoredMembers* scoredMembers);
+  Status ZRangeByScoreWithScores(const Slice& key, int64_t minScore, int64_t maxScore, ScoredMembers* scoredMembers);
+  Status ZRangeByLexWithScores(const Slice& key, const Slice& minLex, const Slice& maxLex, ScoredMembers* scoredMembers);
+  Status ZRevRange(const Slice& key, int64_t minRank, int64_t maxRank, Members* members);
+  Status ZRevRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, Members* members);
+  Status ZRevRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, Members* members);
+  Status ZRevRangeWithScores(const Slice& key, int64_t minRank, int64_t maxRank, ScoredMembers* scoredMembers);
+  Status ZRevRangeByScoreWithScores(const Slice& key, int64_t minScore, int64_t maxScore, ScoredMembers* scoredMembers);
+  Status ZRevRangeByLexWithScores(const Slice& key, const Slice& minLex, const Slice& maxLex, ScoredMembers* scoredMembers);
+
+  Status ZAdd(const Slice& key, const std::pair<Slice, int64_t>& scoredMember, uint64_t* count);
+  Status ZAdd(const Slice& key, const std::map<Slice, int64_t>& scoredMembers, uint64_t* count);
+  Status ZRem(const Slice& key, const Slice& member, uint64_t* count);
+  Status ZRem(const Slice& key, const std::set<Slice>& members, uint64_t* count);
+  Status ZPopMax(const Slice& key, ScoredMember* scoredMember);
+  Status ZPopMin(const Slice& key, ScoredMember* scoredMember);
+  Status ZRemRangeByRank(const Slice& key, int64_t minRank, int64_t maxRank, uint64_t* count);
+  Status ZRemRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count);
+  Status ZRemRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, uint64_t* count);
+
+  Status ZUnion(const std::vector<Slice>& keys, Members* members);
+  Status ZInter(const std::vector<Slice>& keys, Members* members);
+  Status ZDiff(const std::vector<Slice>& keys, Members* members);
+  Status ZUnionWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers);
+  Status ZInterWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers);
+  Status ZDiffWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers);
+  Status ZUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
+  Status ZInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
+  Status ZDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
 
 private:
   RedisString* string_db_;

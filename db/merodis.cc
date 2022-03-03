@@ -315,5 +315,152 @@ Status Merodis::SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, 
 }
 
 // ZSet Operators
+Status Merodis::ZCard(const Slice& key, uint64_t* len){
+  return zset_db_->ZCard(key, len);
+}
+
+Status Merodis::ZScore(const Slice& key, const Slice& member, int64_t* score){
+  return zset_db_->ZScore(key, member, score);
+}
+
+Status Merodis::ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores){
+  return zset_db_->ZMScore(key, members, scores);
+}
+
+Status Merodis::ZRank(const Slice& key, const Slice& member, uint64_t* rank){
+  return zset_db_->ZRank(key, member, rank);
+}
+
+Status Merodis::ZRevRank(const Slice& key, const Slice& member, uint64_t* rank){
+  return zset_db_->ZRevRank(key, member, rank);
+}
+
+Status Merodis::ZCount(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count){
+  return zset_db_->ZCount(key, minScore, maxScore, count);
+}
+
+Status Merodis::ZLexCount(const Slice& key, const Slice& minLex, const Slice& maxLex, uint64_t* count){
+  return zset_db_->ZLexCount(key, minLex, maxLex, count);
+}
+
+Status Merodis::ZRange(const Slice& key, int64_t minRank, int64_t maxRank, Members* members){
+  return zset_db_->ZRange(key, minRank, maxRank, members);
+}
+
+Status Merodis::ZRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, Members* members){
+  return zset_db_->ZRangeByScore(key, minScore, maxScore, members);
+}
+
+Status Merodis::ZRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, Members* members){
+  return zset_db_->ZRangeByLex(key, minLex, maxLex, members);
+}
+
+Status Merodis::ZRangeWithScores(const Slice& key, int64_t minRank, int64_t maxRank, ScoredMembers* scoredMembers){
+  return zset_db_->ZRangeWithScores(key, minRank, maxRank, scoredMembers);
+}
+
+Status Merodis::ZRangeByScoreWithScores(const Slice& key, int64_t minScore, int64_t maxScore, ScoredMembers* scoredMembers){
+  return zset_db_->ZRangeByScoreWithScores(key, minScore, maxScore, scoredMembers);
+}
+
+Status Merodis::ZRangeByLexWithScores(const Slice& key, const Slice& minLex, const Slice& maxLex, ScoredMembers* scoredMembers){
+  return zset_db_->ZRangeByLexWithScores(key, minLex, maxLex, scoredMembers);
+}
+
+Status Merodis::ZRevRange(const Slice& key, int64_t minRank, int64_t maxRank, Members* members){
+  return zset_db_->ZRevRange(key, minRank, maxRank, members);
+}
+
+Status Merodis::ZRevRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, Members* members){
+  return zset_db_->ZRevRangeByScore(key, minScore, maxScore, members);
+}
+
+Status Merodis::ZRevRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, Members* members){
+  return zset_db_->ZRevRangeByLex(key, minLex, maxLex, members);
+}
+
+Status Merodis::ZRevRangeWithScores(const Slice& key, int64_t minRank, int64_t maxRank, ScoredMembers* scoredMembers){
+  return zset_db_->ZRevRangeWithScores(key, minRank, maxRank, scoredMembers);
+}
+
+Status Merodis::ZRevRangeByScoreWithScores(const Slice& key, int64_t minScore, int64_t maxScore, ScoredMembers* scoredMembers){
+  return zset_db_->ZRevRangeByScoreWithScores(key, minScore, maxScore, scoredMembers);
+}
+
+Status Merodis::ZRevRangeByLexWithScores(const Slice& key, const Slice& minLex, const Slice& maxLex, ScoredMembers* scoredMembers){
+  return zset_db_->ZRevRangeByLexWithScores(key, minLex, maxLex, scoredMembers);
+}
+
+Status Merodis::ZAdd(const Slice& key, const std::pair<Slice, int64_t>& scoredMember, uint64_t* count){
+  return zset_db_->ZAdd(key, scoredMember, count);
+}
+
+Status Merodis::ZAdd(const Slice& key, const std::map<Slice, int64_t>& scoredMembers, uint64_t* count){
+  return zset_db_->ZAdd(key, scoredMembers, count);
+}
+
+Status Merodis::ZRem(const Slice& key, const Slice& member, uint64_t* count){
+  return zset_db_->ZRem(key, member, count);
+}
+
+Status Merodis::ZRem(const Slice& key, const std::set<Slice>& members, uint64_t* count){
+  return zset_db_->ZRem(key, members, count);
+}
+
+Status Merodis::ZPopMax(const Slice& key, ScoredMember* scoredMember){
+  return zset_db_->ZPopMax(key, scoredMember);
+}
+
+Status Merodis::ZPopMin(const Slice& key, ScoredMember* scoredMember){
+  return zset_db_->ZPopMin(key, scoredMember);
+}
+
+Status Merodis::ZRemRangeByRank(const Slice& key, int64_t minRank, int64_t maxRank, uint64_t* count){
+  return zset_db_->ZRemRangeByRank(key, minRank, maxRank, count);
+}
+
+Status Merodis::ZRemRangeByScore(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count){
+  return zset_db_->ZRemRangeByScore(key, minScore, maxScore, count);
+}
+
+Status Merodis::ZRemRangeByLex(const Slice& key, const Slice& minLex, const Slice& maxLex, uint64_t* count){
+  return zset_db_->ZRemRangeByLex(key, minLex, maxLex, count);
+}
+
+Status Merodis::ZUnion(const std::vector<Slice>& keys, Members* members){
+  return zset_db_->ZUnion(keys, members);
+}
+
+Status Merodis::ZInter(const std::vector<Slice>& keys, Members* members){
+  return zset_db_->ZInter(keys, members);
+}
+
+Status Merodis::ZDiff(const std::vector<Slice>& keys, Members* members){
+  return zset_db_->ZDiff(keys, members);
+}
+
+Status Merodis::ZUnionWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers){
+  return zset_db_->ZUnionWithScores(keys, scoredMembers);
+}
+
+Status Merodis::ZInterWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers){
+  return zset_db_->ZInterWithScores(keys, scoredMembers);
+}
+
+Status Merodis::ZDiffWithScores(const std::vector<Slice>& keys, ScoredMembers* scoredMembers){
+  return zset_db_->ZDiffWithScores(keys, scoredMembers);
+}
+
+Status Merodis::ZUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count){
+  return zset_db_->ZUnionStore(keys, dstKey, count);
+}
+
+Status Merodis::ZInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count){
+  return zset_db_->ZInterStore(keys, dstKey, count);
+}
+
+Status Merodis::ZDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count){
+  return zset_db_->ZDiffStore(keys, dstKey, count);
+}
 
 }
