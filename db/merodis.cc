@@ -9,24 +9,27 @@
 #include "redis_list_array_impl.h"
 #include "redis_hash_basic_impl.h"
 #include "redis_set_basic_impl.h"
+#include "redis_zset_basic_impl.h"
 
 namespace merodis {
 
 static const std::vector<std::string> databases {
-  "string", "list", "hash", "set"
+  "string", "list", "hash", "set", "zset"
 };
 
 Merodis::Merodis() noexcept :
   string_db_(nullptr),
   list_db_(nullptr),
   hash_db_(nullptr),
-  set_db_(nullptr) {}
+  set_db_(nullptr),
+  zset_db_(nullptr) {}
 
 Merodis::~Merodis() noexcept {
   delete string_db_;
   delete list_db_;
   delete hash_db_;
   delete set_db_;
+  delete zset_db_;
 }
 
 Status Merodis::Open(const Options& options, const std::string& db_path) noexcept {
@@ -54,7 +57,12 @@ Status Merodis::Open(const Options& options, const std::string& db_path) noexcep
     default:
       set_db_ = new RedisSetBasicImpl;
   }
-  Redis* dbs_[] = {string_db_, list_db_, hash_db_, set_db_};
+  switch (options.zset_impl) {
+    case kZSetBasicImpl:
+    default:
+      zset_db_ = new RedisZSetBasicImpl;
+  }
+  Redis* dbs_[] = {string_db_, list_db_, hash_db_, set_db_, zset_db_};
   std::string db_home(db_path + "/");
   for (int c = 0; c < databases.size(); c++) {
     s = dbs_[c]->Open(options, db_home + databases[c]);
@@ -305,5 +313,7 @@ Status Merodis::SInterStore(const std::vector<Slice>& keys, const Slice& dstKey,
 Status Merodis::SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
   return set_db_->SDiffStore(keys, dstKey, count);
 }
+
+// ZSet Operators
 
 }

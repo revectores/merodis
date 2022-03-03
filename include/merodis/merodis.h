@@ -45,12 +45,16 @@ enum HashImpl {
 enum SetImpl {
   kSetBasicImpl,
 };
+enum ZSetImpl {
+  kZSetBasicImpl,
+};
 
 struct Options : public leveldb::Options {
   enum StringImpl string_impl = kStringTypedImpl;
   enum ListImpl list_impl = kListArrayImpl;
   enum HashImpl hash_impl = kHashBasicImpl;
   enum SetImpl set_impl = kSetBasicImpl;
+  enum ZSetImpl zset_impl = kZSetBasicImpl;
 };
 
 using ReadOptions = leveldb::ReadOptions;
@@ -64,6 +68,7 @@ class RedisString;
 class RedisList;
 class RedisHash;
 class RedisSet;
+class RedisZSet;
 
 class Merodis {
 public:
@@ -138,11 +143,14 @@ public:
   Status SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
   Status SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count);
 
+  // ZSet Operators
+
 private:
   RedisString* string_db_;
   RedisList* list_db_;
   RedisHash* hash_db_;
   RedisSet* set_db_;
+  RedisZSet* zset_db_;
 };
 
 }

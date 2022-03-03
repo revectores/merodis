@@ -37,6 +37,9 @@ target_sources(merodis PRIVATE
   db/redis_set.h
   db/redis_set_basic_impl.cc
   db/redis_set_basic_impl.h
+  db/redis_zset.h
+  db/redis_zset_basic_impl.cc
+  db/redis_zset_basic_impl.h
   db/layout.cc
   db/layout.h
   util/coding.h
@@ -62,6 +65,7 @@ if(MERODIS_BUILD_TESTS)
     tests/list_test.cc
     tests/hash_test.cc
     tests/set_test.cc
+    tests/zset_test.cc
   )
   target_link_directories(test_merodis PRIVATE third_party/googletest)
   target_link_libraries(test_merodis merodis gmock gtest)
