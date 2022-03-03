@@ -307,6 +307,11 @@ void SetTest::TestInter() {
   ASSERT_EQ(SInter({"s0", "s2"}), LIST());
   ASSERT_EQ(SInter({"s0", "s3"}), LIST("0", "1"));
   ASSERT_EQ(SInter({"s0", "s4"}), LIST());
+
+  ASSERT_EQ(SInterStore({"s0", "s1"}, "u"), 1);
+  ASSERT_EQ(SMembers("u"), LIST("1"));
+  ASSERT_EQ(SInterStore({"s0", "s1"}, "s0"), 1);
+  ASSERT_EQ(SMembers("s0"), LIST("1"));
 }
 
 void SetTest::TestDiff() {

@@ -467,7 +467,14 @@ Status RedisSetBasicImpl::SUnionStore(const std::vector<Slice>& keys, const Slic
 }
 
 Status RedisSetBasicImpl::SInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
-  return Status::NotSupported("");
+  Status s;
+  std::vector<std::string> members;
+  s = SInter(keys, &members);
+  if (!s.ok()) return s;
+  s = Del(dstKey);
+  if (!s.ok()) return s;
+  std::set<Slice> memberSet(members.begin(), members.end());
+  return SAdd(dstKey, memberSet, count);
 }
 
 Status RedisSetBasicImpl::SDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) {
