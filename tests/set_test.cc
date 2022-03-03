@@ -291,6 +291,8 @@ void SetTest::TestUnion() {
   ASSERT_EQ(SUnion({"s0", "s2"}), LIST("0", "1", "2", "3"));
   ASSERT_EQ(SUnion({"s0", "s3"}), LIST("0", "1", "2"));
   ASSERT_EQ(SUnion({"s0", "s4"}), LIST("0", "1"));
+  ASSERT_EQ(SUnion({"s0", "s1", "s2"}), LIST("0", "1", "2", "3"));
+  ASSERT_EQ(SUnion({"s0", "s1", "s2", "s3"}), LIST("0", "1", "2", "3"));
 
   ASSERT_EQ(SUnionStore({"s0", "s1"}, "u"), 3);
   ASSERT_EQ(SMembers("u"), LIST("0", "1", "2"));
@@ -307,6 +309,8 @@ void SetTest::TestInter() {
   ASSERT_EQ(SInter({"s0", "s2"}), LIST());
   ASSERT_EQ(SInter({"s0", "s3"}), LIST("0", "1"));
   ASSERT_EQ(SInter({"s0", "s4"}), LIST());
+  ASSERT_EQ(SInter({"s1", "s2", "s3"}), LIST("2"));
+  ASSERT_EQ(SInter({"s0", "s1", "s2", "s3"}), LIST());
 
   ASSERT_EQ(SInterStore({"s0", "s1"}, "u"), 1);
   ASSERT_EQ(SMembers("u"), LIST("1"));
@@ -323,6 +327,8 @@ void SetTest::TestDiff() {
   ASSERT_EQ(SDiff({"s0", "s2"}), LIST("0", "1"));
   ASSERT_EQ(SDiff({"s0", "s3"}), LIST());
   ASSERT_EQ(SDiff({"s0", "s4"}), LIST("0", "1"));
+  ASSERT_EQ(SDiff({"s0", "s1", "s2"}), LIST("0"));
+  ASSERT_EQ(SDiff({"s0", "s1", "s2", "s3"}), LIST());
 
   ASSERT_EQ(SDiffStore({"s0", "s1"}, "u"), 1);
   ASSERT_EQ(SMembers("u"), LIST("0"));
