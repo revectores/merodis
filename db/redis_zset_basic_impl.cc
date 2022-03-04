@@ -34,8 +34,32 @@ Status RedisZSetBasicImpl::ZScore(const Slice& key,
 
 Status RedisZSetBasicImpl::ZMScore(const Slice& key,
                                    const std::vector<Slice>& members,
-                                   std::vector<int64_t>* scores){
-	return Status::NotSupported("");
+                                   ScoreOpts* scores){
+  std::map<Slice, std::optional<int64_t>> member2score;
+  for (auto& member: members) member2score[member] = std::nullopt;
+  MemberIterator mIter(db_, key);
+  if (!mIter.Valid()) {
+    *scores = ScoreOpts(members.size(), std::nullopt);
+    return Status::OK();
+  }
+
+  auto queryIter = member2score.begin();
+  while (mIter.Valid() && queryIter != member2score.end()) {
+    int r = queryIter->first.compare(mIter.member());
+    if (r == 0) {
+      queryIter->second = mIter.score();
+      ++queryIter;
+      mIter.Next();
+    } else if (r > 0) {
+      mIter.Next();
+    } else {
+      ++queryIter;
+    }
+  }
+
+  scores->reserve(members.size());
+  for (auto& member: members) scores->push_back(member2score[member]);
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRank(const Slice& key,

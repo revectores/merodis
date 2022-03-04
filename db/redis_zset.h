@@ -13,7 +13,7 @@ public:
 
   virtual Status ZCard(const Slice& key, uint64_t* len) = 0;
   virtual Status ZScore(const Slice& key, const Slice& member, int64_t* score) = 0;
-  virtual Status ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores) = 0;
+  virtual Status ZMScore(const Slice& key, const std::vector<Slice>& members, ScoreOpts* scores) = 0;
   virtual Status ZRank(const Slice& key, const Slice& member, uint64_t* rank) = 0;
   virtual Status ZRevRank(const Slice& key, const Slice& member, uint64_t* rank) = 0;
   virtual Status ZCount(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count) = 0;

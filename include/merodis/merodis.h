@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <optional>
 
 #include "leveldb/db.h"
 
@@ -26,6 +27,7 @@ typedef std::string Member;
 typedef std::vector<Member> Members;
 typedef std::pair<std::string, int64_t> ScoredMember;
 typedef std::vector<ScoredMember> ScoredMembers;
+typedef std::vector<std::optional<uint64_t>> ScoreOpts;
 
 enum BeforeOrAfter {
   kBefore,
@@ -150,7 +152,7 @@ public:
   // ZSet Operators
   Status ZCard(const Slice& key, uint64_t* len);
   Status ZScore(const Slice& key, const Slice& member, int64_t* score);
-  Status ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores);
+  Status ZMScore(const Slice& key, const std::vector<Slice>& members, ScoreOpts* scores);
   Status ZRank(const Slice& key, const Slice& member, uint64_t* rank);
   Status ZRevRank(const Slice& key, const Slice& member, uint64_t* rank);
   Status ZCount(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count);

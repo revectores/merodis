@@ -174,6 +174,9 @@ public:
   Slice member() const {
     return {key().data() + setKey_.size() + 1, key().size() - setKey_.size() - 1};
   }
+  int64_t score() const {
+    return static_cast<int64_t>(DecodeFixed64(value().data()) - ScoreOffset);
+  };
 
 private:
   Slice setKey_;
@@ -191,7 +194,7 @@ public:
 
   Status ZCard(const Slice& key, uint64_t* len) final;
   Status ZScore(const Slice& key, const Slice& member, int64_t* score) final;
-  Status ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores) final;
+  Status ZMScore(const Slice& key, const std::vector<Slice>& members, ScoreOpts* scores) final;
   Status ZRank(const Slice& key, const Slice& member, uint64_t* rank) final;
   Status ZRevRank(const Slice& key, const Slice& member, uint64_t* rank) final;
   Status ZCount(const Slice& key, int64_t minScore, int64_t maxScore, uint64_t* count) final;

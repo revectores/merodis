@@ -323,7 +323,7 @@ Status Merodis::ZScore(const Slice& key, const Slice& member, int64_t* score){
   return zset_db_->ZScore(key, member, score);
 }
 
-Status Merodis::ZMScore(const Slice& key, const std::vector<Slice>& members, std::vector<int64_t>* scores){
+Status Merodis::ZMScore(const Slice& key, const std::vector<Slice>& members, ScoreOpts* scores){
   return zset_db_->ZMScore(key, members, scores);
 }
 

@@ -23,8 +23,8 @@ public:
     EXPECT_MERODIS_OK(db.ZScore(key, member, &score));
     return score;
   }
-  std::vector<int64_t> ZMScore(const Slice& key, const std::vector<Slice>& members) {
-    std::vector<int64_t> scores;
+  ScoreOpts ZMScore(const Slice& key, const std::vector<Slice>& members) {
+    ScoreOpts scores;
     EXPECT_MERODIS_OK(db.ZMScore(key, members, &scores));
     return scores;
   }
@@ -200,7 +200,7 @@ public:
   }
   uint64_t ZCard() { return ZCard(key_); }
   int64_t ZScore(const Slice& member) { return ZScore(key_, member); }
-  std::vector<int64_t> ZMScore(const std::vector<Slice>& members) { return ZMScore(key_, members); }
+  ScoreOpts ZMScore(const std::vector<Slice>& members) { return ZMScore(key_, members); }
   uint64_t ZRank(const Slice& member) { return ZRank(key_, member); }
   uint64_t ZRevRank(const Slice& member) { return ZRevRank(key_, member); }
   uint64_t ZCount(int64_t minScore, int64_t maxScore) { return ZCount(key_, minScore, maxScore); }
@@ -228,6 +228,7 @@ public:
   uint64_t ZRemRangeByLex(const Slice& minLex, const Slice& maxLex) { return ZRemRangeByLex(key_, minLex, maxLex); }
 
   virtual void TestZAdd();
+  virtual void TestZMScore();
   virtual void TestZRank();
   virtual void TestZCount();
   virtual void TestZLexCount();
@@ -266,6 +267,18 @@ void ZSetTest::TestZAdd() {
   ASSERT_EQ(ZAdd({"0", 2}), 0);
   ASSERT_EQ(ZCard(), 3);
   ASSERT_EQ(ZScore("0"), 2);
+}
+
+void ZSetTest::TestZMScore() {
+  ASSERT_EQ(ZAdd({"-1", -1}), 1);
+  ASSERT_EQ(ZAdd({"0", 0}), 1);
+  ASSERT_EQ(ZAdd({"1", 1}), 1);
+
+  ASSERT_EQ(ZMScore({"0"}), (ScoreOpts{0}));
+  ASSERT_EQ(ZMScore({"-1", "1"}), (ScoreOpts{-1, 1}));
+  ASSERT_EQ(ZMScore({"-1", "0", "1"}), (ScoreOpts{-1, 0, 1}));
+  ASSERT_EQ(ZMScore({"0", "2"}), (ScoreOpts{0, std::nullopt}));
+  ASSERT_EQ(ZMScore({"-2", "2"}), (ScoreOpts{std::nullopt, std::nullopt}));
 }
 
 void ZSetTest::TestZRank() {
@@ -340,6 +353,10 @@ void ZSetTest::TestZLexCount() {
 
 TEST_F(ZSetBasicImplTest, ZAdd) {
   TestZAdd();
+}
+
+TEST_F(ZSetBasicImplTest, ZMScore) {
+  TestZMScore();
 }
 
 TEST_F(ZSetBasicImplTest, ZRank) {
