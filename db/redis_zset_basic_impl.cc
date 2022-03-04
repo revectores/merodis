@@ -54,7 +54,19 @@ Status RedisZSetBasicImpl::ZCount(const Slice& key,
                                   int64_t minScore,
                                   int64_t maxScore,
                                   uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (minScore > maxScore) return Status::OK();
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid() || iter->key() != key) {
+    delete iter;
+    return Status::OK();
+  }
+  iter->Next();
+  ScoredMemberIterator smIter(iter, key);
+  for (; smIter.Valid() && smIter.score() < minScore; smIter.Next());
+  for (; smIter.Valid() && smIter.score() <= maxScore; smIter.Next(), *count += 1);
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZLexCount(const Slice& key,

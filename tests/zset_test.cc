@@ -7,6 +7,9 @@
 namespace merodis {
 namespace test {
 
+const int64_t minInt64 = std::numeric_limits<int64_t>::min();
+const int64_t maxInt64 = std::numeric_limits<int64_t>::max();
+
 class ZSetTest: public RedisTest {
 public:
   ZSetTest(): key_("key") {}
@@ -226,6 +229,7 @@ public:
 
   virtual void TestZAdd();
   virtual void TestZRank();
+  virtual void TestZCount();
 
 private:
   Slice key_;
@@ -301,12 +305,32 @@ void ZSetTest::TestZRank() {
   ASSERT_MERODIS_IS_NOT_FOUND(s);
 }
 
+void ZSetTest::TestZCount() {
+  ASSERT_EQ(ZAdd({"-1", -1}), 1);
+  ASSERT_EQ(ZAdd({"0", 0}), 1);
+  ASSERT_EQ(ZAdd({"1", 1}), 1);
+
+  ASSERT_EQ(ZCount(-1, -2), 0);
+  ASSERT_EQ(ZCount(-1, -1), 1);
+  ASSERT_EQ(ZCount(-1, 0), 2);
+  ASSERT_EQ(ZCount(-1, 1), 3);
+  ASSERT_EQ(ZCount(-128, 127), 3);
+  ASSERT_EQ(ZCount(minInt64, maxInt64), 3);
+  ASSERT_EQ(ZCount(0, 1), 2);
+  ASSERT_EQ(ZCount(1, 1), 1);
+  ASSERT_EQ(ZCount(2, 1), 0);
+}
+
 TEST_F(ZSetBasicImplTest, ZAdd) {
   TestZAdd();
 }
 
 TEST_F(ZSetBasicImplTest, ZRank) {
   TestZRank();
+}
+
+TEST_F(ZSetBasicImplTest, ZCount) {
+  TestZCount();
 }
 
 }
