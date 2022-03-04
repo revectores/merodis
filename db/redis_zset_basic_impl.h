@@ -3,8 +3,11 @@
 
 #include "redis_zset.h"
 #include "util/coding.h"
+#include <limits>
 
 namespace merodis {
+
+static uint64_t ScoreOffset = -std::numeric_limits<int64_t>::min();
 
 struct ZSetMetaValue {
   explicit ZSetMetaValue() noexcept: len(0) {};
@@ -52,19 +55,22 @@ private:
 
 
 struct ZSetMemberValue {
-  explicit ZSetMemberValue() noexcept: score(0) {};
-  explicit ZSetMemberValue(int64_t score) noexcept: score(score) {};
+  explicit ZSetMemberValue() noexcept: score_(ScoreOffset) {};
+  explicit ZSetMemberValue(int64_t score) noexcept: score_(score + ScoreOffset) {};
   explicit ZSetMemberValue(const std::string& rawValue) noexcept {
-    score = DecodeFixed64<int64_t>(rawValue.data());
+    score_ = DecodeFixed64(rawValue.data());
   }
   ~ZSetMemberValue() noexcept = default;
-  std::string Encode() noexcept {
+  int64_t score() const noexcept { return static_cast<int64_t>(score_ - ScoreOffset); }
+  void score(int64_t score) { score_ = score + ScoreOffset; }
+  std::string Encode() const noexcept {
     std::string rawValue(sizeof(int64_t), 0);
-    EncodeFixed64(rawValue.data(), score);
+    EncodeFixed64(rawValue.data(), score_);
     return rawValue;
   }
 
-  int64_t score;
+private:
+  uint64_t score_;
 };
 
 
@@ -76,7 +82,7 @@ struct ZSetScoredMemberKey {
     data_(keySize_ + 1 + sizeof(int64_t) + memberSize_, 0) {
     memcpy(data_.data(), key.data(), keySize_);
     data_[keySize_] = '\0';
-    EncodeFixed64<int64_t>(data_.data() + keySize_ + 1, score);
+    EncodeFixed64(data_.data() + keySize_ + 1, score + ScoreOffset);
     memcpy(data_.data() + keySize_ + sizeof(int64_t) + 1, member.data(), memberSize_);
   }
   explicit ZSetScoredMemberKey(const Slice& key, const std::pair<Slice, int64_t>& scoredMember) noexcept:
@@ -91,8 +97,8 @@ struct ZSetScoredMemberKey {
   size_t size() const { return data_.size(); }
   Slice key() const { return {data_.data(), keySize_}; }
   Slice member() const { return {data_.data() + data_.size() - memberSize_, memberSize_}; }
-  int64_t score() const { return DecodeFixed64<int64_t>(data_.data() + keySize_ + 1); }
-  void score(int64_t score) { EncodeFixed64<int64_t>(data_.data() + keySize_ + 1, score); };
+  int64_t score() const { return static_cast<int64_t>(DecodeFixed64(data_.data() + keySize_ + 1) - ScoreOffset); }
+  void score(int64_t score) { EncodeFixed64(data_.data() + keySize_ + 1, score + ScoreOffset); };
   Slice Encode() { return data_; }
 
 private:

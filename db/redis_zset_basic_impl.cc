@@ -28,7 +28,7 @@ Status RedisZSetBasicImpl::ZScore(const Slice& key,
   Status s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
   if (!s.ok()) return s;
   ZSetMemberValue memberValue(rawMemberValue);
-  *score = memberValue.score;
+  *score = memberValue.score();
   return Status::OK();
 }
 
@@ -186,7 +186,7 @@ Status RedisZSetBasicImpl::ZAdd(const Slice& key,
   if (s.ok()) {
     *count = 0;
     ZSetMemberValue oldMemberValue(rawMemberValue);
-    int64_t oldScore = oldMemberValue.score;
+    int64_t oldScore = oldMemberValue.score();
     if (oldScore == score) return Status::OK();
     ZSetScoredMemberKey oldScoredMemberKey(key, member, oldScore);
     updates.Delete(oldScoredMemberKey.Encode());
