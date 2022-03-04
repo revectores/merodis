@@ -68,7 +68,13 @@ Status RedisZSetBasicImpl::ZLexCount(const Slice& key,
                                      const Slice& minLex,
                                      const Slice& maxLex,
                                      uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (minLex > maxLex) return Status::OK();
+  MemberIterator mIter(db_, key);
+  if (!mIter.Valid()) return Status::OK();
+  for (; mIter.Valid() && mIter.member() < minLex; mIter.Next());
+  for (; mIter.Valid() && mIter.member() <= maxLex; mIter.Next(), *count += 1);
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRange(const Slice& key,

@@ -10,11 +10,10 @@
 
 namespace leveldb {
 
-inline bool operator<(const Slice& a, const Slice& b) {
-  const size_t min_len = (a.size() < b.size()) ? a.size() : b.size();
-  int r = memcmp(a.data(), b.data(), min_len);
-  return r == 0 ? a.size() < b.size() : r < 0;
-}
+inline bool operator<(const Slice& a, const Slice& b)  { return a.compare(b) < 0; }
+inline bool operator<=(const Slice& a, const Slice& b) { return a.compare(b) <= 0; }
+inline bool operator>(const Slice& a, const Slice& b)  { return a.compare(b) > 0; }
+inline bool operator>=(const Slice& a, const Slice& b) { return a.compare(b) >= 0; }
 
 }
 

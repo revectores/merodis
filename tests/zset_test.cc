@@ -230,6 +230,7 @@ public:
   virtual void TestZAdd();
   virtual void TestZRank();
   virtual void TestZCount();
+  virtual void TestZLexCount();
 
 private:
   Slice key_;
@@ -321,6 +322,22 @@ void ZSetTest::TestZCount() {
   ASSERT_EQ(ZCount(2, 1), 0);
 }
 
+void ZSetTest::TestZLexCount() {
+  ASSERT_EQ(ZAdd({"a", 0}), 1);
+  ASSERT_EQ(ZAdd({"b", 0}), 1);
+  ASSERT_EQ(ZAdd({"c", 0}), 1);
+
+  ASSERT_EQ(ZLexCount("a", "0"), 0);
+  ASSERT_EQ(ZLexCount("a", "a"), 1);
+  ASSERT_EQ(ZLexCount("a", "b"), 2);
+  ASSERT_EQ(ZLexCount("a", "c"), 3);
+  ASSERT_EQ(ZLexCount("0", "z"), 3);
+  ASSERT_EQ(ZLexCount(std::string(1, 0x00), std::string(1, 0xff)), 3);
+  ASSERT_EQ(ZLexCount("b", "c"), 2);
+  ASSERT_EQ(ZLexCount("c", "c"), 1);
+  ASSERT_EQ(ZLexCount("c", "b"), 0);
+}
+
 TEST_F(ZSetBasicImplTest, ZAdd) {
   TestZAdd();
 }
@@ -331,6 +348,10 @@ TEST_F(ZSetBasicImplTest, ZRank) {
 
 TEST_F(ZSetBasicImplTest, ZCount) {
   TestZCount();
+}
+
+TEST_F(ZSetBasicImplTest, ZLexCount) {
+  TestZLexCount();
 }
 
 }
