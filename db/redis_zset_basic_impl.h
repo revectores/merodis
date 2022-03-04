@@ -6,6 +6,102 @@
 
 namespace merodis {
 
+struct ZSetMetaValue {
+  explicit ZSetMetaValue() noexcept: len(0) {};
+  explicit ZSetMetaValue(const std::string& rawValue) noexcept {
+    len = DecodeFixed64(rawValue.data());
+  }
+  ~ZSetMetaValue() noexcept = default;
+  std::string Encode() noexcept {
+    std::string rawValue(sizeof(int64_t), 0);
+    EncodeFixed64(rawValue.data(), len);
+    return rawValue;
+  }
+
+  uint64_t len;
+};
+
+
+struct ZSetMemberKey {
+  explicit ZSetMemberKey() noexcept = default;
+  explicit ZSetMemberKey(const Slice& key, const Slice& member) noexcept:
+    keySize_(key.size()),
+    memberSize_(member.size()),
+    data_(keySize_ + 1 + memberSize_, 0) {
+    memcpy(data_.data(), key.data(), keySize_);
+    data_[keySize_] = '\0';
+    memcpy(data_.data() + keySize_ + 1, member.data(), memberSize_);
+  }
+  explicit ZSetMemberKey(const Slice& rawZSetMemberKey, size_t keySize) noexcept:
+    keySize_(keySize),
+    memberSize_(rawZSetMemberKey.size() - keySize_ - 1),
+    data_(rawZSetMemberKey.ToString()) {
+  }
+  ~ZSetMemberKey() noexcept = default;
+
+  size_t size() const { return data_.size(); }
+  Slice key() const { return {data_.data(), keySize_}; }
+  Slice member() const { return {data_.data() + keySize_ + 1, memberSize_}; }
+  Slice Encode() const { return data_; }
+
+private:
+  size_t keySize_;
+  size_t memberSize_;
+  std::string data_;
+};
+
+
+struct ZSetMemberValue {
+  explicit ZSetMemberValue() noexcept: score(0) {};
+  explicit ZSetMemberValue(int64_t score) noexcept: score(score) {};
+  explicit ZSetMemberValue(const std::string& rawValue) noexcept {
+    score = DecodeFixed64<int64_t>(rawValue.data());
+  }
+  ~ZSetMemberValue() noexcept = default;
+  std::string Encode() noexcept {
+    std::string rawValue(sizeof(int64_t), 0);
+    EncodeFixed64(rawValue.data(), score);
+    return rawValue;
+  }
+
+  int64_t score;
+};
+
+
+struct ZSetScoredMemberKey {
+  explicit ZSetScoredMemberKey() noexcept = default;
+  explicit ZSetScoredMemberKey(const Slice& key, const Slice& member, int64_t score) noexcept:
+    keySize_(key.size()),
+    memberSize_(member.size()),
+    data_(keySize_ + 1 + sizeof(int64_t) + memberSize_, 0) {
+    memcpy(data_.data(), key.data(), keySize_);
+    data_[keySize_] = '\0';
+    EncodeFixed64<int64_t>(data_.data() + keySize_ + 1, score);
+    memcpy(data_.data() + keySize_ + sizeof(int64_t) + 1, member.data(), memberSize_);
+  }
+  explicit ZSetScoredMemberKey(const Slice& key, const std::pair<Slice, int64_t>& scoredMember) noexcept:
+    ZSetScoredMemberKey(key, scoredMember.first, scoredMember.second) {}
+  explicit ZSetScoredMemberKey(const Slice& rawZSetScoredMemberKey, size_t keySize) noexcept:
+    keySize_(keySize),
+    memberSize_(rawZSetScoredMemberKey.size() - keySize_ - sizeof(int64_t) - 1),
+    data_(rawZSetScoredMemberKey.ToString()) {
+  }
+  ~ZSetScoredMemberKey() noexcept = default;
+
+  size_t size() const { return data_.size(); }
+  Slice key() const { return {data_.data(), keySize_}; }
+  Slice member() const { return {data_.data() + data_.size() - memberSize_, memberSize_}; }
+  int64_t score() const { return DecodeFixed64<int64_t>(data_.data() + keySize_ + 1); }
+  void score(int64_t score) { EncodeFixed64<int64_t>(data_.data() + keySize_ + 1, score); };
+  Slice Encode() { return data_; }
+
+private:
+  size_t keySize_;
+  size_t memberSize_;
+  std::string data_;
+};
+
+
 class RedisZSetBasicImpl final : public RedisZSet {
 public:
   RedisZSetBasicImpl() noexcept;

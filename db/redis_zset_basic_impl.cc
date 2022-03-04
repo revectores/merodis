@@ -8,13 +8,28 @@ RedisZSetBasicImpl::RedisZSetBasicImpl() noexcept = default;
 RedisZSetBasicImpl::~RedisZSetBasicImpl() noexcept = default;
 
 Status RedisZSetBasicImpl::ZCard(const Slice& key, uint64_t* len){
-	return Status::NotSupported("");
+  std::string rawZSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawZSetMetaValue);
+  if (s.ok()) {
+    ZSetMetaValue metaValue(rawZSetMetaValue);
+    *len = metaValue.len;
+  } else if (s.IsNotFound()) {
+    *len = 0;
+    s = Status::OK();
+  }
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZScore(const Slice& key,
                                   const Slice& member,
                                   int64_t* score){
-	return Status::NotSupported("");
+  ZSetMemberKey memberKey(key, member);
+  std::string rawMemberValue;
+  Status s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
+  if (!s.ok()) return s;
+  ZSetMemberValue memberValue(rawMemberValue);
+  *score = memberValue.score;
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZMScore(const Slice& key,
@@ -136,7 +151,34 @@ Status RedisZSetBasicImpl::ZRevRangeByLexWithScores(const Slice& key,
 Status RedisZSetBasicImpl::ZAdd(const Slice& key,
                                 const std::pair<Slice, int64_t>& scoredMember,
                                 uint64_t* count){
-	return Status::NotSupported("");
+  std::string rawZSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawZSetMetaValue);
+  ZSetMetaValue zsetMetaValue;
+  if (s.ok()) zsetMetaValue = ZSetMetaValue(rawZSetMetaValue);
+
+  WriteBatch updates;
+  const auto& [member, score] = scoredMember;
+  ZSetMemberKey memberKey(key, member);
+  ZSetMemberValue memberValue(score);
+  ZSetScoredMemberKey scoredMemberKey(key, scoredMember);
+
+  std::string rawMemberValue;
+  s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
+  if (s.ok()) {
+    *count = 0;
+    ZSetMemberValue oldMemberValue(rawMemberValue);
+    int64_t oldScore = oldMemberValue.score;
+    if (oldScore == score) return Status::OK();
+    ZSetScoredMemberKey oldScoredMemberKey(key, member, oldScore);
+    updates.Delete(oldScoredMemberKey.Encode());
+  } else {
+    *count = 1;
+    zsetMetaValue.len += 1;
+    updates.Put(key, zsetMetaValue.Encode());
+  }
+  updates.Put(memberKey.Encode(), memberValue.Encode());
+  updates.Put(scoredMemberKey.Encode(), "");
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZAdd(const Slice& key,

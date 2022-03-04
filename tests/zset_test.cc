@@ -224,6 +224,8 @@ public:
   uint64_t ZRemRangeByScore(int64_t minScore, int64_t maxScore) { return ZRemRangeByScore(key_, minScore, maxScore); }
   uint64_t ZRemRangeByLex(const Slice& minLex, const Slice& maxLex) { return ZRemRangeByLex(key_, minLex, maxLex); }
 
+  virtual void TestZAdd();
+
 private:
   Slice key_;
 };
@@ -235,6 +237,30 @@ public:
     db.Open(options, db_path);
   }
 };
+
+void ZSetTest::TestZAdd() {
+  ASSERT_EQ(ZCard(), 0);
+
+  ASSERT_EQ(ZAdd({"0", 0}), 1);
+  ASSERT_EQ(ZCard(), 1);
+  ASSERT_EQ(ZScore("0"), 0);
+
+  ASSERT_EQ(ZAdd({"1", 1}), 1);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZScore("1"), 1);
+
+  ASSERT_EQ(ZAdd({"0", 1}), 0);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZScore("0"), 1);
+
+  ASSERT_EQ(ZAdd({"0", 1}), 0);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZScore("0"), 1);
+}
+
+TEST_F(ZSetBasicImplTest, ZAdd) {
+  TestZAdd();
+}
 
 }
 }
