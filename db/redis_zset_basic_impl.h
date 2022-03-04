@@ -107,6 +107,39 @@ private:
   std::string data_;
 };
 
+class ScoredMemberIterator: public Iterator {
+public:
+  explicit ScoredMemberIterator(Iterator* iter, const Slice& setKey): iter_(iter), setKey_(setKey) {};
+  ScoredMemberIterator(const ScoredMemberIterator&) = delete;
+  ScoredMemberIterator& operator=(const ScoredMemberIterator&) = delete;
+  ~ScoredMemberIterator() override { delete iter_; }
+
+  bool Valid() const override { return iter_->Valid() && IsMemberKey(); }
+  void SeekToFirst() override { iter_->SeekToFirst(); }
+  void SeekToLast() override { iter_->SeekToLast(); }
+  void Seek(const Slice& target) override { iter_->Seek(target); }
+  void Next() override { iter_->Next(); }
+  void Prev() override { iter_->Prev(); }
+  Slice key() const override { return iter_->key(); }
+  Slice value() const override { return iter_->value(); }
+  Status status() const override { return iter_->status(); }
+
+  int64_t score() const {
+    return static_cast<int64_t>(DecodeFixed64(key().data() + setKey_.size() + 1) - ScoreOffset);
+  };
+  Slice member() const {
+    size_t memberSize = key().size() - setKey_.size() - 1 - sizeof(uint64_t);
+    return {key().data() + key().size() - memberSize, memberSize};
+  }
+
+private:
+  Iterator* iter_;
+  Slice setKey_;
+  bool IsMemberKey() const {
+    return key().size() > setKey_.size() && key()[setKey_.size()] == 0;
+  }
+};
+
 
 class RedisZSetBasicImpl final : public RedisZSet {
 public:

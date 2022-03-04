@@ -295,15 +295,11 @@ Status RedisZSetBasicImpl::ZRankInternal(const Slice& key,
     return Status::NotFound("empty zset");
   }
   ZSetMetaValue metaValue(iter->value().ToString());
-  for (iter->Next(), *rank = 0;
-       iter->Valid() && IsMemberKey(iter->key(), key.size());
-       iter->Next(), ++*rank) {
-    ZSetScoredMemberKey scoredMemberKey(iter->key(), key.size());
-    if (scoredMemberKey.member() == member) {
-      break;
-    }
-  }
-  delete iter;
+  iter->Next();
+  ScoredMemberIterator smIter(iter, key);
+  for (*rank = 0;
+       smIter.Valid() && smIter.member() != member;
+       smIter.Next(), ++*rank);
   if (rev) *rank = metaValue.len - 1 - *rank;
   return Status::OK();
 }
