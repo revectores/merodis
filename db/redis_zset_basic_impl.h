@@ -29,7 +29,7 @@ struct ZSetMemberKey {
     memberSize_(member.size()),
     data_(keySize_ + 1 + memberSize_, 0) {
     memcpy(data_.data(), key.data(), keySize_);
-    data_[keySize_] = '\0';
+    data_[keySize_] = static_cast<char>(0xff);
     memcpy(data_.data() + keySize_ + 1, member.data(), memberSize_);
   }
   explicit ZSetMemberKey(const Slice& rawZSetMemberKey, size_t keySize) noexcept:
@@ -146,6 +146,9 @@ public:
   Status ZUnionStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
   Status ZInterStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
   Status ZDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
+
+private:
+  bool IsMemberKey(const Slice& iterKey, uint64_t keySize);
 };
 
 }

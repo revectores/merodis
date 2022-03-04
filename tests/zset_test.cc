@@ -225,6 +225,7 @@ public:
   uint64_t ZRemRangeByLex(const Slice& minLex, const Slice& maxLex) { return ZRemRangeByLex(key_, minLex, maxLex); }
 
   virtual void TestZAdd();
+  virtual void TestZRank();
 
 private:
   Slice key_;
@@ -258,8 +259,28 @@ void ZSetTest::TestZAdd() {
   ASSERT_EQ(ZScore("0"), 1);
 }
 
+void ZSetTest::TestZRank() {
+  ASSERT_EQ(ZAdd({"0", 0}), 1);
+  ASSERT_EQ(ZAdd({"1", 1}), 1);
+  ASSERT_EQ(ZRank("0"), 0);
+  ASSERT_EQ(ZRank("1"), 1);
+
+  ASSERT_EQ(ZAdd({"0", 2}), 0);
+  ASSERT_EQ(ZRank("0"), 1);
+  ASSERT_EQ(ZRank("1"), 0);
+
+  Status s;
+  uint64_t rank;
+  s = db.ZRank("key", "2", &rank);
+  ASSERT_MERODIS_IS_NOT_FOUND(s);
+}
+
 TEST_F(ZSetBasicImplTest, ZAdd) {
   TestZAdd();
+}
+
+TEST_F(ZSetBasicImplTest, ZRank) {
+  TestZRank();
 }
 
 }
