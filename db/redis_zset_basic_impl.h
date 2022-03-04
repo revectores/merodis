@@ -154,6 +154,8 @@ public:
   Status ZDiffStore(const std::vector<Slice>& keys, const Slice& dstKey, uint64_t* count) final;
 
 private:
+  Status ZRankInternal(const Slice& key, const Slice& member, uint64_t* rank, bool rev);
+
   bool IsMemberKey(const Slice& iterKey, uint64_t keySize);
 };
 

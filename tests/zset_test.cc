@@ -268,21 +268,32 @@ void ZSetTest::TestZRank() {
   ASSERT_EQ(ZAdd({"1", 1}), 1);
   ASSERT_EQ(ZRank("0"), 0);
   ASSERT_EQ(ZRank("1"), 1);
+  ASSERT_EQ(ZRevRank("0"), 1);
+  ASSERT_EQ(ZRevRank("1"), 0);
 
   ASSERT_EQ(ZAdd({"-1", -1}), 1);
   ASSERT_EQ(ZRank("-1"), 0);
   ASSERT_EQ(ZRank("0"), 1);
   ASSERT_EQ(ZRank("1"), 2);
+  ASSERT_EQ(ZRevRank("-1"), 2);
+  ASSERT_EQ(ZRevRank("0"), 1);
+  ASSERT_EQ(ZRevRank("1"), 0);
 
   ASSERT_EQ(ZAdd({"0", 2}), 0);
   ASSERT_EQ(ZRank("-1"), 0);
   ASSERT_EQ(ZRank("0"), 2);
   ASSERT_EQ(ZRank("1"), 1);
+  ASSERT_EQ(ZRevRank("-1"), 2);
+  ASSERT_EQ(ZRevRank("0"), 0);
+  ASSERT_EQ(ZRevRank("1"), 1);
 
   ASSERT_EQ(ZAdd({"0", -2}), 0);
   ASSERT_EQ(ZRank({"-1"}), 1);
   ASSERT_EQ(ZRank({"0"}), 0);
   ASSERT_EQ(ZRank({"1"}), 2);
+  ASSERT_EQ(ZRevRank({"-1"}), 1);
+  ASSERT_EQ(ZRevRank({"0"}), 2);
+  ASSERT_EQ(ZRevRank({"1"}), 0);
 
   Status s;
   uint64_t rank;

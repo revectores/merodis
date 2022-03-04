@@ -41,32 +41,13 @@ Status RedisZSetBasicImpl::ZMScore(const Slice& key,
 Status RedisZSetBasicImpl::ZRank(const Slice& key,
                                  const Slice& member,
                                  uint64_t* rank){
-  ZSetMemberKey memberKey(key, member);
-  std::string rawMemberValue;
-  Status s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
-  if (!s.ok()) return s;
-
-  Iterator* iter = db_->NewIterator(ReadOptions());
-  iter->Seek(key);
-  if (!iter->Valid() || iter->key() != key) {
-    return Status::NotFound("empty zset");
-  }
-  for (iter->Next(), *rank = 0;
-       iter->Valid() && IsMemberKey(iter->key(), key.size());
-       iter->Next(), ++*rank) {
-    ZSetScoredMemberKey scoredMemberKey(iter->key(), key.size());
-    if (scoredMemberKey.member() == member) {
-      break;
-    }
-  }
-  delete iter;
-  return Status::OK();
+  return ZRankInternal(key, member, rank, false);
 }
 
 Status RedisZSetBasicImpl::ZRevRank(const Slice& key,
-                                    const Slice& member,
-                                    uint64_t* rank){
-	return Status::NotSupported("");
+                                 const Slice& member,
+                                 uint64_t* rank){
+  return ZRankInternal(key, member, rank, true);
 }
 
 Status RedisZSetBasicImpl::ZCount(const Slice& key,
@@ -295,6 +276,36 @@ Status RedisZSetBasicImpl::ZDiffStore(const std::vector<Slice>& keys,
                                       const Slice& dstKey,
                                       uint64_t* count){
 	return Status::NotSupported("");
+}
+
+
+
+Status RedisZSetBasicImpl::ZRankInternal(const Slice& key,
+                                         const Slice& member,
+                                         uint64_t* rank,
+                                         bool rev) {
+  ZSetMemberKey memberKey(key, member);
+  std::string rawMemberValue;
+  Status s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
+  if (!s.ok()) return s;
+
+  Iterator* iter = db_->NewIterator(ReadOptions());
+  iter->Seek(key);
+  if (!iter->Valid() || iter->key() != key) {
+    return Status::NotFound("empty zset");
+  }
+  ZSetMetaValue metaValue(iter->value().ToString());
+  for (iter->Next(), *rank = 0;
+       iter->Valid() && IsMemberKey(iter->key(), key.size());
+       iter->Next(), ++*rank) {
+    ZSetScoredMemberKey scoredMemberKey(iter->key(), key.size());
+    if (scoredMemberKey.member() == member) {
+      break;
+    }
+  }
+  delete iter;
+  if (rev) *rank = metaValue.len - 1 - *rank;
+  return Status::OK();
 }
 
 bool RedisZSetBasicImpl::IsMemberKey(const Slice& iterKey, uint64_t keySize) {
