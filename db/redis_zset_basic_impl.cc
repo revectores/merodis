@@ -56,14 +56,9 @@ Status RedisZSetBasicImpl::ZCount(const Slice& key,
                                   uint64_t* count){
   *count = 0;
   if (minScore > maxScore) return Status::OK();
-  Iterator* iter = db_->NewIterator(ReadOptions());
-  iter->Seek(key);
-  if (!iter->Valid() || iter->key() != key) {
-    delete iter;
-    return Status::OK();
-  }
-  iter->Next();
-  ScoredMemberIterator smIter(iter, key);
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  smIter.Next();
   for (; smIter.Valid() && smIter.score() < minScore; smIter.Next());
   for (; smIter.Valid() && smIter.score() <= maxScore; smIter.Next(), *count += 1);
   return Status::OK();
@@ -301,23 +296,15 @@ Status RedisZSetBasicImpl::ZRankInternal(const Slice& key,
   Status s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
   if (!s.ok()) return s;
 
-  Iterator* iter = db_->NewIterator(ReadOptions());
-  iter->Seek(key);
-  if (!iter->Valid() || iter->key() != key) {
-    return Status::NotFound("empty zset");
-  }
-  ZSetMetaValue metaValue(iter->value().ToString());
-  iter->Next();
-  ScoredMemberIterator smIter(iter, key);
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::NotFound("empty zset");
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  smIter.Next();
   for (*rank = 0;
        smIter.Valid() && smIter.member() != member;
        smIter.Next(), ++*rank);
   if (rev) *rank = metaValue.len - 1 - *rank;
   return Status::OK();
-}
-
-bool RedisZSetBasicImpl::IsMemberKey(const Slice& iterKey, uint64_t keySize) {
-  return iterKey.size() > keySize && iterKey[keySize] == 0;
 }
 
 }

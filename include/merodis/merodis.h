@@ -61,6 +61,7 @@ struct Options : public leveldb::Options {
   enum ZSetImpl zset_impl = kZSetBasicImpl;
 };
 
+using DB = leveldb::DB;
 using ReadOptions = leveldb::ReadOptions;
 using WriteOptions = leveldb::WriteOptions;
 using WriteBatch = leveldb::WriteBatch;

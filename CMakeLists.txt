@@ -66,6 +66,7 @@ target_sources(merodis PRIVATE
   db/redis_zset_basic_impl.h
   db/layout.cc
   db/layout.h
+  db/iterator_decorator.h
   util/coding.h
   util/number.h
   util/random.h

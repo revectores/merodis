@@ -1,9 +1,10 @@
 #ifndef MERODIS_REDIS_ZSET_BASIC_IMPL_H
 #define MERODIS_REDIS_ZSET_BASIC_IMPL_H
 
-#include "redis_zset.h"
-#include "util/coding.h"
 #include <limits>
+#include "redis_zset.h"
+#include "iterator_decorator.h"
+#include "util/coding.h"
 
 namespace merodis {
 
@@ -107,23 +108,28 @@ private:
   std::string data_;
 };
 
-class ScoredMemberIterator: public Iterator {
+class ScoredMemberIterator: public IteratorDecorator {
 public:
-  explicit ScoredMemberIterator(Iterator* iter, const Slice& setKey): iter_(iter), setKey_(setKey) {};
+  explicit ScoredMemberIterator(DB* db, const Slice& setKey):
+    IteratorDecorator(db->NewIterator(ReadOptions())),
+    setKey_(setKey) {
+    iter_->Seek(setKey);
+    valid_ = iter_->Valid() && iter_->key() == setKey;
+  }
+  explicit ScoredMemberIterator(Iterator* iter, const Slice& setKey):
+    IteratorDecorator(iter),
+    setKey_(setKey),
+    valid_(iter_->Valid() && IsScoredMemberKey()) {}
   ScoredMemberIterator(const ScoredMemberIterator&) = delete;
   ScoredMemberIterator& operator=(const ScoredMemberIterator&) = delete;
-  ~ScoredMemberIterator() override { delete iter_; }
+  ~ScoredMemberIterator() override = default;
 
-  bool Valid() const override { return iter_->Valid() && IsMemberKey(); }
-  void SeekToFirst() override { iter_->SeekToFirst(); }
-  void SeekToLast() override { iter_->SeekToLast(); }
-  void Seek(const Slice& target) override { iter_->Seek(target); }
-  void Next() override { iter_->Next(); }
-  void Prev() override { iter_->Prev(); }
-  Slice key() const override { return iter_->key(); }
-  Slice value() const override { return iter_->value(); }
-  Status status() const override { return iter_->status(); }
-
+  bool Valid() const override { return valid_; }
+  void Next() override {
+    assert(valid_);
+    iter_->Next();
+    valid_ = iter_->Valid() && IsScoredMemberKey();
+  }
   int64_t score() const {
     return static_cast<int64_t>(DecodeFixed64(key().data() + setKey_.size() + 1) - ScoreOffset);
   };
@@ -133,10 +139,47 @@ public:
   }
 
 private:
-  Iterator* iter_;
   Slice setKey_;
-  bool IsMemberKey() const {
+  bool valid_;
+  bool IsScoredMemberKey() const {
     return key().size() > setKey_.size() && key()[setKey_.size()] == 0;
+  }
+};
+
+class MemberIterator: public IteratorDecorator {
+public:
+  explicit MemberIterator(DB* db, const Slice& setKey):
+    IteratorDecorator(db->NewIterator(ReadOptions())),
+    setKey_(setKey) {
+    std::string memberKeyPrefix(setKey.size() + 1, 0);
+    memcpy(memberKeyPrefix.data(), setKey_.data(), setKey_.size());
+    memberKeyPrefix[setKey.size()] = (char)0xff;
+    iter_->Seek(memberKeyPrefix);
+    valid_ = iter_->Valid() && iter_->key().starts_with(memberKeyPrefix);
+  }
+  explicit MemberIterator(Iterator* iter, const Slice& setKey):
+    IteratorDecorator(iter),
+    setKey_(setKey),
+    valid_(iter_->Valid() && IsMemberKey()) {};
+  MemberIterator(const MemberIterator&) = delete;
+  MemberIterator& operator=(const MemberIterator&) = delete;
+  ~MemberIterator() override = default;
+
+  bool Valid() const override { return valid_; }
+  void Next() override {
+    assert(valid_);
+    iter_->Next();
+    valid_ = iter_->Valid() && IsMemberKey();
+  }
+  Slice member() const {
+    return {key().data() + setKey_.size() + 1, key().size() - setKey_.size() - 1};
+  }
+
+private:
+  Slice setKey_;
+  bool valid_;
+  bool IsMemberKey() const {
+    return key().size() > setKey_.size() && key()[setKey_.size()] == (char)0xff;
   }
 };
 
@@ -188,8 +231,6 @@ public:
 
 private:
   Status ZRankInternal(const Slice& key, const Slice& member, uint64_t* rank, bool rev);
-
-  bool IsMemberKey(const Slice& iterKey, uint64_t keySize);
 };
 
 }
