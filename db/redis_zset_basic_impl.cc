@@ -221,7 +221,50 @@ Status RedisZSetBasicImpl::ZAdd(const Slice& key,
 Status RedisZSetBasicImpl::ZAdd(const Slice& key,
                                 const std::map<Slice, int64_t>& scoredMembers,
                                 uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (scoredMembers.empty()) return Status::OK();
+  std::string rawZSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawZSetMetaValue);
+  ZSetMetaValue zsetMetaValue;
+  if (s.ok()) zsetMetaValue = ZSetMetaValue(rawZSetMetaValue);
+
+  WriteBatch updates;
+  MemberIterator mIter(db_, key);
+  auto updatesIter = scoredMembers.cbegin();
+  while (updatesIter != scoredMembers.cend()) {
+    const auto [member, score] = *updatesIter;
+    int r = mIter.Valid() ? updatesIter->first.compare(mIter.member()) : -1;
+    if (r <= 0) {
+      if (r == 0) {
+        int64_t oldScore = mIter.score();
+        if (oldScore == score) {
+          ++updatesIter;
+          mIter.Next();
+          continue;
+        }
+        ZSetScoredMemberKey oldScoredMemberKey(key, member, oldScore);
+        updates.Delete(oldScoredMemberKey.Encode());
+        mIter.Next();
+      } else {
+        *count += 1;
+      }
+      ZSetMemberKey memberKey(key, member);
+      ZSetMemberValue memberValue(score);
+      ZSetScoredMemberKey scoredMemberKey(key, member, score);
+      updates.Put(memberKey.Encode(), memberValue.Encode());
+      updates.Put(scoredMemberKey.Encode(), "");
+      ++updatesIter;
+    } else {
+      mIter.Next();
+    }
+  }
+
+  if (*count) {
+    zsetMetaValue.len += *count;
+    updates.Put(key, zsetMetaValue.Encode());
+  }
+  db_->Write(WriteOptions(), &updates);
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRem(const Slice& key,
