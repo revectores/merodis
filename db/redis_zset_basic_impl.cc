@@ -405,12 +405,12 @@ Status RedisZSetBasicImpl::ZRem(const Slice& key,
 
 Status RedisZSetBasicImpl::ZPopMax(const Slice& key,
                                    ScoredMember* scoredMember){
-	return Status::NotSupported("");
+  return ZPop(key, scoredMember, kMax);
 }
 
 Status RedisZSetBasicImpl::ZPopMin(const Slice& key,
                                    ScoredMember* scoredMember){
-	return Status::NotSupported("");
+  return ZPop(key, scoredMember, kMin);
 }
 
 Status RedisZSetBasicImpl::ZRemRangeByRank(const Slice& key,
@@ -562,6 +562,24 @@ Status RedisZSetBasicImpl::ZRankInternal(const Slice& key,
        smIter.Next(), ++*rank);
   if (rev) *rank = metaValue.len - 1 - *rank;
   return Status::OK();
+}
+
+Status RedisZSetBasicImpl::ZPop(const Slice& key,
+                                ScoredMember* scoredMember,
+                                MinOrMax minOrMax) {
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  minOrMax == kMin ? smIter.Next() : smIter.SeekToLast();
+  if (!smIter.Valid()) return Status::OK();
+
+  WriteBatch updates;
+  *scoredMember = ScoredMember(smIter.member().ToString(), smIter.score());
+  updates.Delete(smIter.key());
+  updates.Delete(ZSetMemberKey(key, smIter.member()).Encode());
+  metaValue.len -= 1;
+  updates.Put(key, metaValue.Encode());
+  return db_->Write(WriteOptions(), &updates);
 }
 
 }

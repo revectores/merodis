@@ -234,6 +234,8 @@ public:
   virtual void TestZRemRangeByRank();
   virtual void TestZRemRangeByScore();
   virtual void TestZRemRangeByLex();
+  virtual void TestZPopMin();
+  virtual void TestZPopMax();
   virtual void TestZMScore();
   virtual void TestZRank();
   virtual void TestZCount();
@@ -418,6 +420,50 @@ void ZSetTest::TestZRemRangeByLex() {
   ASSERT_EQ(ZRange(0, -1), LIST());
 }
 
+void ZSetTest::TestZPopMax() {
+  ASSERT_EQ(ZAdd({{"-1", -1}, {"0", 0}, {"1", 1}}), 3);
+  ASSERT_EQ(ZCard(), 3);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1", "0", "1"));
+
+  ASSERT_EQ(ZPopMax(), PAIR("1", 1));
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1", "0"));
+
+  ASSERT_EQ(ZPopMax(), PAIR("0", 0));
+  ASSERT_EQ(ZCard(), 1);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1"));
+
+  ASSERT_EQ(ZPopMax(), PAIR("-1", -1));
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZPopMax(), (std::pair<std::string, int64_t>()));
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
+void ZSetTest::TestZPopMin() {
+  ASSERT_EQ(ZAdd({{"-1", -1}, {"0", 0}, {"1", 1}}), 3);
+  ASSERT_EQ(ZCard(), 3);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1", "0", "1"));
+
+  ASSERT_EQ(ZPopMin(), PAIR("-1", -1));
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("0", "1"));
+
+  ASSERT_EQ(ZPopMin(), PAIR("0", 0));
+  ASSERT_EQ(ZCard(), 1);
+  ASSERT_EQ(ZRange(0, -1), LIST("1"));
+
+  ASSERT_EQ(ZPopMin(), PAIR("1", 1));
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZPopMin(), (std::pair<std::string, int64_t>()));
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
 void ZSetTest::TestZMScore() {
   ASSERT_EQ(ZAdd({"-1", -1}), 1);
   ASSERT_EQ(ZAdd({"0", 0}), 1);
@@ -591,6 +637,14 @@ TEST_F(ZSetBasicImplTest, ZRemRangeByScore) {
 
 TEST_F(ZSetBasicImplTest, ZRemRangeByLex) {
   TestZRemRangeByLex();
+}
+
+TEST_F(ZSetBasicImplTest, ZPopMax) {
+  TestZPopMax();
+}
+
+TEST_F(ZSetBasicImplTest, ZPopMin) {
+  TestZPopMin();
 }
 
 TEST_F(ZSetBasicImplTest, ZMScore) {

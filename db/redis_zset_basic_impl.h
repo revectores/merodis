@@ -130,6 +130,19 @@ public:
     iter_->Next();
     valid_ = iter_->Valid() && IsScoredMemberKey();
   }
+  void SeekToLast() override {
+    assert(valid_);
+    std::string memberKeyPrefix(setKey_.size() + 1, 0);
+    memcpy(memberKeyPrefix.data(), setKey_.data(), setKey_.size());
+    memberKeyPrefix[setKey_.size()] = (char)0xff;
+    iter_->Seek(memberKeyPrefix);
+    if (!iter_->Valid()) {
+      valid_ = false;
+      return;
+    }
+    iter_->Prev();
+    valid_ = iter_->Valid();
+  };
   int64_t score() const {
     return static_cast<int64_t>(DecodeFixed64(key().data() + setKey_.size() + 1) - ScoreOffset);
   };
@@ -234,6 +247,7 @@ public:
 
 private:
   Status ZRankInternal(const Slice& key, const Slice& member, uint64_t* rank, bool rev);
+  Status ZPop(const Slice& key, ScoredMember* scoredMember, MinOrMax minOrMax);
 };
 
 }

@@ -33,6 +33,10 @@ enum BeforeOrAfter {
   kBefore,
   kAfter,
 };
+enum MinOrMax {
+  kMin,
+  kMax,
+};
 enum Side {
   kLeft,
   kRight,
