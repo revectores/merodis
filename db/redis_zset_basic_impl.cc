@@ -345,7 +345,25 @@ Status RedisZSetBasicImpl::ZAdd(const Slice& key,
 Status RedisZSetBasicImpl::ZRem(const Slice& key,
                                 const Slice& member,
                                 uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  std::string rawZSetMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawZSetMetaValue);
+  if (!s.ok()) return Status::OK();
+  ZSetMetaValue metaValue(rawZSetMetaValue);
+
+  WriteBatch updates;
+  ZSetMemberKey memberKey(key, member);
+  std::string rawMemberValue;
+  s = db_->Get(ReadOptions(), memberKey.Encode(), &rawMemberValue);
+  if (!s.ok()) return Status::OK();
+  ZSetMemberValue memberValue(rawMemberValue);
+  ZSetScoredMemberKey scoredMemberKey(key, member, memberValue.score());
+  updates.Delete(memberKey.Encode());
+  updates.Delete(scoredMemberKey.Encode());
+  *count = 1;
+  metaValue.len -= 1;
+  updates.Put(key, metaValue.Encode());
+	return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZRem(const Slice& key,

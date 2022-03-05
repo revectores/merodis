@@ -229,6 +229,7 @@ public:
 
   virtual void TestZAdd();
   virtual void TestZAddN();
+  virtual void TestZRem();
   virtual void TestZMScore();
   virtual void TestZRank();
   virtual void TestZCount();
@@ -282,6 +283,31 @@ void ZSetTest::TestZAddN() {
   ASSERT_EQ(ZAdd({{"0", 1}, {"2", 2}}), 1);
   ASSERT_EQ(ZAdd({{"1", -1}, {"-1", 1}}), 0);
   ASSERT_EQ(ZMScore({"-1", "0", "1", "2"}), (ScoreOpts{1, 1, -1, 2}));
+}
+
+void ZSetTest::TestZRem() {
+  ASSERT_EQ(ZAdd({{"-1", -1}, {"0", 0}, {"1", 1}}), 3);
+  ASSERT_EQ(ZCard(), 3);
+
+  ASSERT_EQ(ZRem("0"), 1);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1", "1"));
+
+  ASSERT_EQ(ZRem("0"), 0);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-1", "1"));
+
+  ASSERT_EQ(ZRem("-1"), 1);
+  ASSERT_EQ(ZCard(), 1);
+  ASSERT_EQ(ZRange(0, -1), LIST("1"));
+
+  ASSERT_EQ(ZRem("1"), 1);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZRem("1"), 0);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
 }
 
 void ZSetTest::TestZMScore() {
@@ -437,6 +463,10 @@ TEST_F(ZSetBasicImplTest, ZAdd) {
 
 TEST_F(ZSetBasicImplTest, ZAddN) {
   TestZAddN();
+}
+
+TEST_F(ZSetBasicImplTest, ZRem) {
+  TestZRem();
 }
 
 TEST_F(ZSetBasicImplTest, ZMScore) {
