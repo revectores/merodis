@@ -231,6 +231,9 @@ public:
   virtual void TestZAddN();
   virtual void TestZRem();
   virtual void TestZRemN();
+  virtual void TestZRemRangeByRank();
+  virtual void TestZRemRangeByScore();
+  virtual void TestZRemRangeByLex();
   virtual void TestZMScore();
   virtual void TestZRank();
   virtual void TestZCount();
@@ -333,6 +336,84 @@ void ZSetTest::TestZRemN() {
   ASSERT_EQ(ZRange(0, -1), LIST());
 
   ASSERT_EQ(ZRem({"-2", "0", "2"}), 0);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
+void ZSetTest::TestZRemRangeByRank() {
+  ASSERT_EQ(ZAdd({{"-2", -2}, {"-1", -1}, {"0", 0}, {"1", 1}, {"2", 2}}), 5);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByRank(1, 0), 0);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByRank(2, 2), 1);
+  ASSERT_EQ(ZCard(), 4);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByRank(1, 2), 2);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "2"));
+
+  ASSERT_EQ(ZRemRangeByRank(0, 1), 2);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZRemRangeByRank(0, 1), 0);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
+void ZSetTest::TestZRemRangeByScore() {
+  ASSERT_EQ(ZAdd({{"-2", -2}, {"-1", -1}, {"0", 0}, {"1", 1}, {"2", 2}}), 5);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByScore(3, 3), 0);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByScore(0, 0), 1);
+  ASSERT_EQ(ZCard(), 4);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "1", "2"));
+
+  ASSERT_EQ(ZRemRangeByScore(-1, 1), 2);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "2"));
+
+  ASSERT_EQ(ZRemRangeByScore(-2, 2), 2);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZRemRangeByScore(-2, 2), 0);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
+void ZSetTest::TestZRemRangeByLex() {
+  ASSERT_EQ(ZAdd({{"a", 0}, {"b", 0}, {"c", 0}, {"d", 0}, {"e", 0}}), 5);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("a", "b", "c", "d", "e"));
+
+  ASSERT_EQ(ZRemRangeByLex("f", "f"), 0);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("a", "b", "c", "d", "e"));
+
+  ASSERT_EQ(ZRemRangeByLex("c", "c"), 1);
+  ASSERT_EQ(ZCard(), 4);
+  ASSERT_EQ(ZRange(0, -1), LIST("a", "b", "d", "e"));
+
+  ASSERT_EQ(ZRemRangeByLex("b", "d"), 2);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("a", "e"));
+
+  ASSERT_EQ(ZRemRangeByLex("a", "e"), 2);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZRemRangeByLex("a", "e"), 0);
   ASSERT_EQ(ZCard(), 0);
   ASSERT_EQ(ZRange(0, -1), LIST());
 }
@@ -498,6 +579,18 @@ TEST_F(ZSetBasicImplTest, ZRem) {
 
 TEST_F(ZSetBasicImplTest, ZRemN) {
   TestZRemN();
+}
+
+TEST_F(ZSetBasicImplTest, ZRemRangeByRank) {
+  TestZRemRangeByRank();
+}
+
+TEST_F(ZSetBasicImplTest, ZRemRangeByScore) {
+  TestZRemRangeByScore();
+}
+
+TEST_F(ZSetBasicImplTest, ZRemRangeByLex) {
+  TestZRemRangeByLex();
 }
 
 TEST_F(ZSetBasicImplTest, ZMScore) {

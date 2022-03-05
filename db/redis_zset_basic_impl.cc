@@ -417,21 +417,81 @@ Status RedisZSetBasicImpl::ZRemRangeByRank(const Slice& key,
                                            int64_t minRank,
                                            int64_t maxRank,
                                            uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  int64_t size = static_cast<int64_t>(metaValue.len);
+  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
+  uint64_t rangeSize = upper - lower + 1;
+  if (rangeSize < 0) return Status::OK();
+  smIter.Next();
+
+  WriteBatch updates;
+  for (; smIter.Valid() && lower--; smIter.Next());
+  for (; smIter.Valid() && rangeSize--; smIter.Next()) {
+    updates.Delete(smIter.key());
+    updates.Delete(ZSetMemberKey(key, smIter.member()).Encode());
+    *count += 1;
+  }
+  if (*count) {
+    metaValue.len -= *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZRemRangeByScore(const Slice& key,
                                             int64_t minScore,
                                             int64_t maxScore,
                                             uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (minScore > maxScore) return Status::OK();
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  smIter.Next();
+
+  WriteBatch updates;
+  for (; smIter.Valid() && smIter.score() < minScore; smIter.Next());
+  for (; smIter.Valid() && smIter.score() <= maxScore; smIter.Next()) {
+    updates.Delete(smIter.key());
+    updates.Delete(ZSetMemberKey(key, smIter.member()).Encode());
+    *count += 1;
+  }
+  if (*count) {
+    metaValue.len -= *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZRemRangeByLex(const Slice& key,
                                           const Slice& minLex,
                                           const Slice& maxLex,
                                           uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (minLex > maxLex) return Status::OK();
+  std::string rawMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawMetaValue);
+  if (!s.ok()) return Status::OK();
+  ZSetMetaValue metaValue(rawMetaValue);
+  MemberIterator mIter(db_, key);
+  if (!mIter.Valid()) return Status::OK();
+
+  WriteBatch updates;
+  for (; mIter.Valid() && mIter.member() < minLex; mIter.Next());
+  for (; mIter.Valid() && mIter.member() <= maxLex; mIter.Next()) {
+    updates.Delete(mIter.key());
+    updates.Delete(ZSetScoredMemberKey(key, mIter.member(), mIter.score()).Encode());
+    *count += 1;
+  }
+  if (*count) {
+    metaValue.len -= *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZUnion(const std::vector<Slice>& keys,
