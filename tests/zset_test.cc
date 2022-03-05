@@ -233,6 +233,9 @@ public:
   virtual void TestZRank();
   virtual void TestZCount();
   virtual void TestZLexCount();
+  virtual void TestZRange();
+  virtual void TestZRangeByScore();
+  virtual void TestZRangeByLex();
 
 private:
   Slice key_;
@@ -337,6 +340,7 @@ void ZSetTest::TestZCount() {
   ASSERT_EQ(ZAdd({"1", 1}), 1);
 
   ASSERT_EQ(ZCount(-1, -2), 0);
+  ASSERT_EQ(ZCount(-2, -1), 1);
   ASSERT_EQ(ZCount(-1, -1), 1);
   ASSERT_EQ(ZCount(-1, 0), 2);
   ASSERT_EQ(ZCount(-1, 1), 3);
@@ -344,6 +348,7 @@ void ZSetTest::TestZCount() {
   ASSERT_EQ(ZCount(minInt64, maxInt64), 3);
   ASSERT_EQ(ZCount(0, 1), 2);
   ASSERT_EQ(ZCount(1, 1), 1);
+  ASSERT_EQ(ZCount(1, 2), 1);
   ASSERT_EQ(ZCount(2, 1), 0);
 }
 
@@ -353,6 +358,7 @@ void ZSetTest::TestZLexCount() {
   ASSERT_EQ(ZAdd({"c", 0}), 1);
 
   ASSERT_EQ(ZLexCount("a", "0"), 0);
+  ASSERT_EQ(ZLexCount("0", "a"), 1);
   ASSERT_EQ(ZLexCount("a", "a"), 1);
   ASSERT_EQ(ZLexCount("a", "b"), 2);
   ASSERT_EQ(ZLexCount("a", "c"), 3);
@@ -360,7 +366,69 @@ void ZSetTest::TestZLexCount() {
   ASSERT_EQ(ZLexCount(std::string(1, 0x00), std::string(1, 0xff)), 3);
   ASSERT_EQ(ZLexCount("b", "c"), 2);
   ASSERT_EQ(ZLexCount("c", "c"), 1);
-  ASSERT_EQ(ZLexCount("c", "b"), 0);
+  ASSERT_EQ(ZLexCount("c", "d"), 1);
+  ASSERT_EQ(ZLexCount("d", "c"), 0);
+}
+
+void ZSetTest::TestZRange() {
+  ASSERT_EQ(ZAdd({{"-1", -1}, {"0", 0}, {"1", 1}}), 3);
+
+  ASSERT_EQ(ZRange(0, -4), LIST());
+  ASSERT_EQ(ZRange(-4, 0), LIST("-1"));
+  ASSERT_EQ(ZRange(0, 0), LIST("-1"));
+  ASSERT_EQ(ZRange(0, 1), LIST("-1", "0"));
+  ASSERT_EQ(ZRange(0, 2), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRange(-128, 127), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRange(minInt64, maxInt64), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRange(-3, -1), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRange(-2, -1), LIST("0", "1"));
+  ASSERT_EQ(ZRange(-1, -1), LIST("1"));
+  ASSERT_EQ(ZRange(-1, 4), LIST("1"));
+  ASSERT_EQ(ZRange(-1, -2), LIST());
+
+  ASSERT_EQ(ZRevRange(0, -1), LIST("1", "0", "-1"));
+  ASSERT_EQ(ZRangeWithScores(0, -1), PAIRS({"-1", -1}, {"0", 0}, {"1", 1}));
+  ASSERT_EQ(ZRevRangeWithScores(0, -1), PAIRS({"1", 1}, {"0", 0}, {"-1", -1}));
+}
+
+void ZSetTest::TestZRangeByScore() {
+  ASSERT_EQ(ZAdd({{"-1", -1}, {"0", 0}, {"1", 1}}), 3);
+
+  ASSERT_EQ(ZRangeByScore(-1, -2), LIST());
+  ASSERT_EQ(ZRangeByScore(-2, -1), LIST("-1"));
+  ASSERT_EQ(ZRangeByScore(-1, -1), LIST("-1"));
+  ASSERT_EQ(ZRangeByScore(-1, 0), LIST("-1", "0"));
+  ASSERT_EQ(ZRangeByScore(-1, 1), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRangeByScore(-128, 127), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRangeByScore(minInt64, maxInt64), LIST("-1", "0", "1"));
+  ASSERT_EQ(ZRangeByScore(0, 1), LIST("0", "1"));
+  ASSERT_EQ(ZRangeByScore(1, 1), LIST("1"));
+  ASSERT_EQ(ZRangeByScore(1, 2), LIST("1"));
+  ASSERT_EQ(ZRangeByScore(2, 1), LIST());
+
+  ASSERT_EQ(ZRevRangeByScore(-1, 1), LIST("1", "0", "-1"));
+  ASSERT_EQ(ZRangeByScoreWithScores(-1, 1), PAIRS({"-1", -1}, {"0", 0}, {"1", 1}));
+  ASSERT_EQ(ZRevRangeByScoreWithScores(-1, 1), PAIRS({"1", 1}, {"0", 0}, {"-1", -1}));
+}
+
+void ZSetTest::TestZRangeByLex() {
+  ASSERT_EQ(ZAdd({{"a", 0}, {"b", 0}, {"c", 0}}), 3);
+
+  ASSERT_EQ(ZRangeByLex("a", "0"), LIST());
+  ASSERT_EQ(ZRangeByLex("0", "a"), LIST("a"));
+  ASSERT_EQ(ZRangeByLex("a", "a"), LIST("a"));
+  ASSERT_EQ(ZRangeByLex("a", "b"), LIST("a", "b"));
+  ASSERT_EQ(ZRangeByLex("a", "c"), LIST("a", "b", "c"));
+  ASSERT_EQ(ZRangeByLex("0", "z"), LIST("a", "b", "c"));
+  ASSERT_EQ(ZRangeByLex(std::string(1, 0x00), std::string(1, 0xff)), LIST("a", "b", "c"));
+  ASSERT_EQ(ZRangeByLex("b", "c"), LIST("b", "c"));
+  ASSERT_EQ(ZRangeByLex("c", "c"), LIST("c"));
+  ASSERT_EQ(ZRangeByLex("c", "d"), LIST("c"));
+  ASSERT_EQ(ZRangeByLex("d", "c"), LIST());
+
+  ASSERT_EQ(ZRevRangeByLex("a", "c"), LIST("c", "b", "a"));
+  ASSERT_EQ(ZRangeByLexWithScores("a", "c"), PAIRS({"a", 0}, {"b", 0}, {"c", 0}));
+  ASSERT_EQ(ZRevRangeByLexWithScores("a", "c"), PAIRS({"c", 0}, {"b", 0}, {"a", 0}));
 }
 
 TEST_F(ZSetBasicImplTest, ZAdd) {
@@ -385,6 +453,18 @@ TEST_F(ZSetBasicImplTest, ZCount) {
 
 TEST_F(ZSetBasicImplTest, ZLexCount) {
   TestZLexCount();
+}
+
+TEST_F(ZSetBasicImplTest, ZRange) {
+  TestZRange();
+}
+
+TEST_F(ZSetBasicImplTest, ZRangeByScore) {
+  TestZRangeByScore();
+}
+
+TEST_F(ZSetBasicImplTest, ZRangeByLex) {
+  TestZRangeByLex();
 }
 
 }

@@ -1,5 +1,6 @@
 #include "redis_zset_basic_impl.h"
 
+#include <algorithm>
 #include "leveldb/write_batch.h"
 
 namespace merodis {
@@ -105,84 +106,158 @@ Status RedisZSetBasicImpl::ZRange(const Slice& key,
                                   int64_t minRank,
                                   int64_t maxRank,
                                   Members* members){
-	return Status::NotSupported("");
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  int64_t size = static_cast<int64_t>(metaValue.len);
+  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
+  uint64_t rangeSize = upper - lower + 1;
+  if (rangeSize < 0) return Status::OK();
+  smIter.Next();
+  for (; smIter.Valid() && lower--; smIter.Next());
+  for (; smIter.Valid() && rangeSize--; smIter.Next()) {
+    members->push_back(smIter.member().ToString());
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRangeByScore(const Slice& key,
                                          int64_t minScore,
                                          int64_t maxScore,
                                          Members* members){
-	return Status::NotSupported("");
+  if (minScore > maxScore) return Status::OK();
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  smIter.Next();
+  for (; smIter.Valid() && smIter.score() < minScore; smIter.Next());
+  for (; smIter.Valid() && smIter.score() <= maxScore; smIter.Next()) {
+    members->push_back(smIter.member().ToString());
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRangeByLex(const Slice& key,
                                        const Slice& minLex,
                                        const Slice& maxLex,
                                        Members* members){
-	return Status::NotSupported("");
+  if (minLex > maxLex) return Status::OK();
+  MemberIterator mIter(db_, key);
+  if (!mIter.Valid()) return Status::OK();
+  for (; mIter.Valid() && mIter.member() < minLex; mIter.Next());
+  for (; mIter.Valid() && mIter.member() <= maxLex; mIter.Next()) {
+    members->push_back(mIter.member().ToString());
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRangeWithScores(const Slice& key,
                                             int64_t minRank,
                                             int64_t maxRank,
                                             ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  ZSetMetaValue metaValue(smIter.value().ToString());
+  int64_t size = static_cast<int64_t>(metaValue.len);
+  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
+  uint64_t rangeSize = upper - lower + 1;
+  if (rangeSize < 0) return Status::OK();
+  smIter.Next();
+  for (; smIter.Valid() && lower--; smIter.Next());
+  for (; smIter.Valid() && rangeSize--; smIter.Next()) {
+    scoredMembers->push_back({smIter.member().ToString(), smIter.score()});
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRangeByScoreWithScores(const Slice& key,
                                                    int64_t minScore,
                                                    int64_t maxScore,
                                                    ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  if (minScore > maxScore) return Status::OK();
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  smIter.Next();
+  for (; smIter.Valid() && smIter.score() < minScore; smIter.Next());
+  for (; smIter.Valid() && smIter.score() <= maxScore; smIter.Next()) {
+    scoredMembers->push_back({smIter.member().ToString(), smIter.score()});
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRangeByLexWithScores(const Slice& key,
                                                  const Slice& minLex,
                                                  const Slice& maxLex,
                                                  ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  if (minLex > maxLex) return Status::OK();
+  MemberIterator mIter(db_, key);
+  if (!mIter.Valid()) return Status::OK();
+  for (; mIter.Valid() && mIter.member() < minLex; mIter.Next());
+  for (; mIter.Valid() && mIter.member() <= maxLex; mIter.Next()) {
+    scoredMembers->push_back({mIter.member().ToString(), mIter.score()});
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZRevRange(const Slice& key,
                                      int64_t minRank,
                                      int64_t maxRank,
                                      Members* members){
-	return Status::NotSupported("");
+  Status s = ZRange(key, minRank, maxRank, members);
+  if (!s.ok()) return s;
+  std::reverse(members->begin(), members->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZRevRangeByScore(const Slice& key,
                                             int64_t minScore,
                                             int64_t maxScore,
                                             Members* members){
-	return Status::NotSupported("");
+  Status s = ZRangeByScore(key, minScore, maxScore, members);
+  if (!s.ok()) return s;
+  std::reverse(members->begin(), members->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZRevRangeByLex(const Slice& key,
                                           const Slice& minLex,
                                           const Slice& maxLex,
                                           Members* members){
-	return Status::NotSupported("");
+  Status s = ZRangeByLex(key, minLex, maxLex, members);
+  if (!s.ok()) return s;
+  std::reverse(members->begin(), members->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZRevRangeWithScores(const Slice& key,
                                                int64_t minRank,
                                                int64_t maxRank,
                                                ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Status s = ZRangeWithScores(key, minRank, maxRank, scoredMembers);
+  if (!s.ok()) return s;
+  std::reverse(scoredMembers->begin(), scoredMembers->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZRevRangeByScoreWithScores(const Slice& key,
                                                       int64_t minScore,
                                                       int64_t maxScore,
                                                       ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Status s = ZRangeByScoreWithScores(key, minScore, maxScore, scoredMembers);
+  if (!s.ok()) return s;
+  std::reverse(scoredMembers->begin(), scoredMembers->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZRevRangeByLexWithScores(const Slice& key,
                                                     const Slice& minLex,
                                                     const Slice& maxLex,
                                                     ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Status s = ZRangeByLexWithScores(key, minLex, maxLex, scoredMembers);
+  if (!s.ok()) return s;
+  std::reverse(scoredMembers->begin(), scoredMembers->end());
+  return s;
 }
 
 Status RedisZSetBasicImpl::ZAdd(const Slice& key,
