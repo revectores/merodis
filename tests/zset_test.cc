@@ -243,6 +243,9 @@ public:
   virtual void TestZRemRangeByRank();
   virtual void TestZRemRangeByScore();
   virtual void TestZRemRangeByLex();
+  virtual void TestZUnion();
+  virtual void TestZInter();
+  virtual void TestZDiff();
 
 private:
   Slice key_;
@@ -611,6 +614,65 @@ void ZSetTest::TestZRemRangeByLex() {
   ASSERT_EQ(ZRange(0, -1), LIST());
 }
 
+void ZSetTest::TestZUnion() {
+  ASSERT_EQ(ZAdd("z0", {{"a", 0}, {"b", 1}}), 2);
+  ASSERT_EQ(ZAdd("z1", {{"a", 0}, {"b", 1}, {"c", 2}}), 3);
+  ASSERT_EQ(ZAdd("z2", {{"b", 0}, {"c", 1}, {"d", 2}}), 3);
+  ASSERT_EQ(ZAdd("z3", {{"c", 0}, {"d", 1}}), 2);
+
+  ASSERT_EQ(ZUnion({"z0", "zx"}), LIST("a", "b"));
+  ASSERT_EQ(ZUnion({"z0", "z1"}), LIST("a", "b", "c"));
+  ASSERT_EQ(ZUnion({"z0", "z2"}), LIST("a", "b", "c", "d"));
+  ASSERT_EQ(ZUnion({"z0", "z3"}), LIST("a", "c", "b", "d"));
+  ASSERT_EQ(ZUnion({"z0", "z1", "z2", "z3"}), LIST("a", "b", "c", "d"));
+  ASSERT_EQ(ZUnionWithScores({"z0", "zx"}), PAIRS({"a", 0}, {"b", 1}));
+  ASSERT_EQ(ZUnionWithScores({"z0", "z1"}), PAIRS({"a", 0}, {"b", 2}, {"c", 2}));
+  ASSERT_EQ(ZUnionWithScores({"z0", "z2"}), PAIRS({"a", 0}, {"b", 1}, {"c", 1}, {"d", 2}));
+  ASSERT_EQ(ZUnionWithScores({"z0", "z3"}), PAIRS({"a", 0}, {"c", 0}, {"b", 1}, {"d", 1}));
+  ASSERT_EQ(ZUnionWithScores({"z0", "z1", "z2", "z3"}), PAIRS({"a", 0}, {"b", 2}, {"c", 3}, {"d", 3}));
+
+  ASSERT_EQ(ZUnionStore({"z0", "z2"}, "zx"), 4);
+  ASSERT_EQ(ZRangeWithScores("zx", 0, -1), PAIRS({"a", 0}, {"b", 1}, {"c", 1}, {"d", 2}));
+  ASSERT_EQ(ZUnionStore({"z0", "z3"}, "z0"), 4);
+  ASSERT_EQ(ZRangeWithScores("z0", 0, -1), PAIRS({"a", 0}, {"c", 0}, {"b", 1}, {"d", 1}));
+}
+
+void ZSetTest::TestZInter() {
+  ASSERT_EQ(ZAdd("z0", {{"a", 0}, {"b", 1}}), 2);
+  ASSERT_EQ(ZAdd("z1", {{"a", 0}, {"b", 1}, {"c", 2}}), 3);
+  ASSERT_EQ(ZAdd("z2", {{"b", 0}, {"c", 1}, {"d", 2}}), 3);
+  ASSERT_EQ(ZAdd("z3", {{"c", 0}, {"d", 1}}), 2);
+
+  ASSERT_EQ(ZInter({"z0", "zx"}), LIST());
+  ASSERT_EQ(ZInter({"z0", "z1"}), LIST("a", "b"));
+  ASSERT_EQ(ZInter({"z0", "z2"}), LIST("b"));
+  ASSERT_EQ(ZInter({"z0", "z3"}), LIST());
+  ASSERT_EQ(ZInter({"z0", "z1", "z2", "z3"}), LIST());
+  ASSERT_EQ(ZInterWithScores({"z0", "zx"}), PAIRS());
+  ASSERT_EQ(ZInterWithScores({"z0", "z1"}), PAIRS({"a", 0}, {"b", 2}));
+  ASSERT_EQ(ZInterWithScores({"z0", "z2"}), PAIRS({"b", 1}));
+  ASSERT_EQ(ZInterWithScores({"z0", "z3"}), PAIRS());
+  ASSERT_EQ(ZInterWithScores({"z0", "z1", "z2", "z3"}), PAIRS());
+}
+
+void ZSetTest::TestZDiff() {
+  ASSERT_EQ(ZAdd("z0", {{"a", 0}, {"b", 1}}), 2);
+  ASSERT_EQ(ZAdd("z1", {{"a", 0}, {"b", 1}, {"c", 2}}), 3);
+  ASSERT_EQ(ZAdd("z2", {{"b", 0}, {"c", 1}, {"d", 2}}), 3);
+  ASSERT_EQ(ZAdd("z3", {{"c", 0}, {"d", 1}}), 2);
+
+  ASSERT_EQ(ZDiff({"z0", "zx"}), LIST("a", "b"));
+  ASSERT_EQ(ZDiff({"z0", "z1"}), LIST());
+  ASSERT_EQ(ZDiff({"z0", "z2"}), LIST("a"));
+  ASSERT_EQ(ZDiff({"z0", "z3"}), LIST("a", "b"));
+  ASSERT_EQ(ZDiff({"z0", "z1", "z2", "z3"}), LIST());
+  ASSERT_EQ(ZDiffWithScores({"z0", "zx"}), PAIRS({"a", 0}, {"b", 1}));
+  ASSERT_EQ(ZDiffWithScores({"z0", "z1"}), PAIRS());
+  ASSERT_EQ(ZDiffWithScores({"z0", "z2"}), PAIRS({"a", 0}));
+  ASSERT_EQ(ZDiffWithScores({"z0", "z3"}), PAIRS({"a", 0}, {"b", 1}));
+  ASSERT_EQ(ZDiffWithScores({"z0", "z1", "z2", "z3"}), PAIRS());
+}
+
 TEST_F(ZSetBasicImplTest, ZMScore) {
   TestZMScore();
 }
@@ -673,6 +735,18 @@ TEST_F(ZSetBasicImplTest, ZRemRangeByScore) {
 
 TEST_F(ZSetBasicImplTest, ZRemRangeByLex) {
   TestZRemRangeByLex();
+}
+
+TEST_F(ZSetBasicImplTest, ZUnion) {
+  TestZUnion();
+}
+
+TEST_F(ZSetBasicImplTest, ZInter) {
+  TestZInter();
+}
+
+TEST_F(ZSetBasicImplTest, ZDiff) {
+  TestZDiff();
 }
 
 }

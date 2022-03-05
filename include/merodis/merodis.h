@@ -24,10 +24,13 @@ namespace merodis {
 
 typedef int64_t UserIndex;
 typedef std::string Member;
+typedef int64_t Score;
 typedef std::vector<Member> Members;
+typedef std::vector<Score> Scores;
+typedef std::vector<std::optional<Score>> ScoreOpts;
+typedef std::map<leveldb::Slice, Score> Member2Score;
 typedef std::pair<std::string, int64_t> ScoredMember;
 typedef std::vector<ScoredMember> ScoredMembers;
-typedef std::vector<std::optional<uint64_t>> ScoreOpts;
 
 enum BeforeOrAfter {
   kBefore,

@@ -8,6 +8,19 @@ namespace merodis {
 RedisZSetBasicImpl::RedisZSetBasicImpl() noexcept = default;
 RedisZSetBasicImpl::~RedisZSetBasicImpl() noexcept = default;
 
+Status RedisZSetBasicImpl::Del(const Slice& key) {
+  WriteBatch updates;
+  ScoredMemberIterator smIter(db_, key);
+  if (!smIter.Valid()) return Status::OK();
+  updates.Delete(smIter.key());
+
+  for (smIter.Next(); smIter.Valid(); smIter.Next()) {
+    updates.Delete(smIter.key());
+    updates.Delete(ZSetMemberKey(key, smIter.member()).Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
+}
+
 Status RedisZSetBasicImpl::ZCard(const Slice& key, uint64_t* len){
   std::string rawZSetMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawZSetMetaValue);
@@ -496,50 +509,98 @@ Status RedisZSetBasicImpl::ZRemRangeByLex(const Slice& key,
 
 Status RedisZSetBasicImpl::ZUnion(const std::vector<Slice>& keys,
                                   Members* members){
-	return Status::NotSupported("");
+  ScoredMembers scoredMembers;
+  ZUnionWithScores(keys, &scoredMembers);
+  for (const auto& [member, _]: scoredMembers) {
+    members->push_back(member);
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZInter(const std::vector<Slice>& keys,
                                   Members* members){
-	return Status::NotSupported("");
+  ScoredMembers scoredMembers;
+  ZInterWithScores(keys, &scoredMembers);
+  for (const auto& [member, _]: scoredMembers) {
+    members->push_back(member);
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZDiff(const std::vector<Slice>& keys,
                                  Members* members){
-	return Status::NotSupported("");
+  ScoredMembers scoredMembers;
+  ZDiffWithScores(keys, &scoredMembers);
+  for (const auto& [member, _]: scoredMembers) {
+    members->push_back(member);
+  }
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZUnionWithScores(const std::vector<Slice>& keys,
                                             ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Member2Score member2score = ZUnionAsMap(keys);
+  scoredMembers->reserve(member2score.size());
+  for (const auto& [member, score]: member2score) {
+    scoredMembers->push_back({member.ToString(), score});
+  }
+  std::sort(scoredMembers->begin(), scoredMembers->end(), [](auto &left, auto &right) {
+    return left.second < right.second;
+  });
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZInterWithScores(const std::vector<Slice>& keys,
                                             ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Member2Score member2score = ZInterAsMap(keys);
+  scoredMembers->reserve(member2score.size());
+  for (const auto& [member, score]: member2score) {
+    scoredMembers->push_back({member.ToString(), score});
+  }
+  std::sort(scoredMembers->begin(), scoredMembers->end(), [](auto &left, auto &right) {
+    return left.second < right.second;
+  });
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZDiffWithScores(const std::vector<Slice>& keys,
                                            ScoredMembers* scoredMembers){
-	return Status::NotSupported("");
+  Member2Score member2score = ZDiffAsMap(keys);
+  scoredMembers->reserve(member2score.size());
+  for (const auto& [member, score]: member2score) {
+    scoredMembers->push_back({member.ToString(), score});
+  }
+  std::sort(scoredMembers->begin(), scoredMembers->end(), [](auto &left, auto &right) {
+    return left.second < right.second;
+  });
+  return Status::OK();
 }
 
 Status RedisZSetBasicImpl::ZUnionStore(const std::vector<Slice>& keys,
                                        const Slice& dstKey,
                                        uint64_t* count){
-	return Status::NotSupported("");
+  Member2Score member2score = ZUnionAsMap(keys);
+  Status s = Del(dstKey);
+  if (!s.ok()) return s;
+  return ZAdd(dstKey, member2score, count);
 }
 
 Status RedisZSetBasicImpl::ZInterStore(const std::vector<Slice>& keys,
                                        const Slice& dstKey,
                                        uint64_t* count){
-	return Status::NotSupported("");
+  Member2Score member2score = ZInterAsMap(keys);
+  Status s = Del(dstKey);
+  if (!s.ok()) return s;
+  return ZAdd(dstKey, member2score, count);
 }
 
 Status RedisZSetBasicImpl::ZDiffStore(const std::vector<Slice>& keys,
                                       const Slice& dstKey,
                                       uint64_t* count){
-	return Status::NotSupported("");
+  Member2Score member2score = ZDiffAsMap(keys);
+  Status s = Del(dstKey);
+  if (!s.ok()) return s;
+  return ZAdd(dstKey, member2score, count);
 }
 
 
@@ -580,6 +641,67 @@ Status RedisZSetBasicImpl::ZPop(const Slice& key,
   metaValue.len -= 1;
   updates.Put(key, metaValue.Encode());
   return db_->Write(WriteOptions(), &updates);
+}
+
+Member2Score RedisZSetBasicImpl::ZUnionAsMap(const std::vector<Slice>& keys){
+  Member2Score member2score;
+  for (const auto& key: keys) {
+    MemberIterator mIter(db_, key);
+    if (!mIter.Valid()) continue;
+    for (; mIter.Valid(); mIter.Next()) {
+      member2score[mIter.member()] += mIter.score();
+    }
+  }
+  return member2score;
+}
+
+Member2Score RedisZSetBasicImpl::ZInterAsMap(const std::vector<Slice>& keys){
+  Member2Score member2score;
+  MemberIterator frontIter(db_, keys.front());
+  if (!frontIter.Valid()) return {};
+  for (; frontIter.Valid(); frontIter.Next()) {
+    member2score[frontIter.member()] += frontIter.score();
+  }
+
+  for (auto it = std::next(keys.begin()); it != keys.end(); it++) {
+    Slice key = *it;
+    MemberIterator mIter(db_, key);
+    if (!mIter.Valid()) return {};
+    for (auto mit = member2score.cbegin(); mit != member2score.cend(); ) {
+      Slice member = mit->first;
+      mIter.Seek(ZSetMemberKey(key, member.ToString()).Encode());
+      if (!mIter.Valid()) break;
+      if (mIter.member() == mit->first) {
+        member2score[member] += mIter.score();
+        mit++;
+      } else {
+        member2score.erase(mit++);
+      }
+    }
+  }
+  return member2score;
+}
+
+Member2Score RedisZSetBasicImpl::ZDiffAsMap(const std::vector<Slice>& keys){
+  Member2Score member2score;
+  MemberIterator frontIter(db_, keys.front());
+  if (!frontIter.Valid()) return {};
+  for (; frontIter.Valid(); frontIter.Next()) {
+    member2score[frontIter.member()] += frontIter.score();
+  }
+
+  for (auto it = std::next(keys.begin()); it != keys.end(); it++) {
+    Slice key = *it;
+    MemberIterator mIter(db_, key);
+    if (!mIter.Valid()) continue;
+    for (auto mit = member2score.cbegin(); mit != member2score.cend(); ) {
+      Slice member = mit->first;
+      mIter.Seek(ZSetMemberKey(key, member.ToString()).Encode());
+      if (!mIter.Valid()) break;
+      mIter.member() == mit->first ? member2score.erase(mit++): mit++;
+    }
+  }
+  return member2score;
 }
 
 }

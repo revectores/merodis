@@ -205,6 +205,8 @@ public:
   RedisZSetBasicImpl() noexcept;
   ~RedisZSetBasicImpl() noexcept final;
 
+  Status Del(const Slice& key);
+
   Status ZCard(const Slice& key, uint64_t* len) final;
   Status ZScore(const Slice& key, const Slice& member, int64_t* score) final;
   Status ZMScore(const Slice& key, const std::vector<Slice>& members, ScoreOpts* scores) final;
@@ -248,6 +250,9 @@ public:
 private:
   Status ZRankInternal(const Slice& key, const Slice& member, uint64_t* rank, bool rev);
   Status ZPop(const Slice& key, ScoredMember* scoredMember, MinOrMax minOrMax);
+  Member2Score ZUnionAsMap(const std::vector<Slice>& keys);
+  Member2Score ZInterAsMap(const std::vector<Slice>& keys);
+  Member2Score ZDiffAsMap(const std::vector<Slice>& keys);
 };
 
 }
