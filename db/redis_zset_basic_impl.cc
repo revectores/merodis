@@ -369,7 +369,38 @@ Status RedisZSetBasicImpl::ZRem(const Slice& key,
 Status RedisZSetBasicImpl::ZRem(const Slice& key,
                                 const std::set<Slice>& members,
                                 uint64_t* count){
-	return Status::NotSupported("");
+  *count = 0;
+  if (members.empty()) return Status::OK();
+  std::string rawMetaValue;
+  Status s = db_->Get(ReadOptions(), key, &rawMetaValue);
+  ZSetMetaValue metaValue;
+  if (s.ok()) metaValue = ZSetMetaValue(rawMetaValue);
+
+  WriteBatch updates;
+  MemberIterator mIter(db_, key);
+  auto updatesIter = members.cbegin();
+  while (mIter.Valid() && updatesIter != members.cend())  {
+    const auto member = *updatesIter;
+    int r = updatesIter->compare(mIter.member());
+    if (r == 0) {
+      ZSetMemberKey memberKey(key, member);
+      ZSetScoredMemberKey scoredMemberKey(key, member, mIter.score());
+      updates.Delete(memberKey.Encode());
+      updates.Delete(scoredMemberKey.Encode());
+      *count += 1;
+      mIter.Next();
+      ++updatesIter;
+    } else if (r < 0) {
+      ++updatesIter;
+    } else {
+      mIter.Next();
+    }
+  }
+  if (*count) {
+    metaValue.len -= *count;
+    updates.Put(key, metaValue.Encode());
+  }
+  return db_->Write(WriteOptions(), &updates);
 }
 
 Status RedisZSetBasicImpl::ZPopMax(const Slice& key,

@@ -230,6 +230,7 @@ public:
   virtual void TestZAdd();
   virtual void TestZAddN();
   virtual void TestZRem();
+  virtual void TestZRemN();
   virtual void TestZMScore();
   virtual void TestZRank();
   virtual void TestZCount();
@@ -306,6 +307,32 @@ void ZSetTest::TestZRem() {
   ASSERT_EQ(ZRange(0, -1), LIST());
 
   ASSERT_EQ(ZRem("1"), 0);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+}
+
+void ZSetTest::TestZRemN() {
+  ASSERT_EQ(ZAdd({{"-2", -2}, {"-1", -1}, {"0", 0}, {"1", 1}, {"2", 2}}), 5);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRem(std::set<Slice>{}), 0);
+  ASSERT_EQ(ZCard(), 5);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "0", "1", "2"));
+
+  ASSERT_EQ(ZRem(std::set<Slice>{"0"}), 1);
+  ASSERT_EQ(ZCard(), 4);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "-1", "1", "2"));
+
+  ASSERT_EQ(ZRem({"-1", "1"}), 2);
+  ASSERT_EQ(ZCard(), 2);
+  ASSERT_EQ(ZRange(0, -1), LIST("-2", "2"));
+
+  ASSERT_EQ(ZRem({"-2", "0", "2"}), 2);
+  ASSERT_EQ(ZCard(), 0);
+  ASSERT_EQ(ZRange(0, -1), LIST());
+
+  ASSERT_EQ(ZRem({"-2", "0", "2"}), 0);
   ASSERT_EQ(ZCard(), 0);
   ASSERT_EQ(ZRange(0, -1), LIST());
 }
@@ -467,6 +494,10 @@ TEST_F(ZSetBasicImplTest, ZAddN) {
 
 TEST_F(ZSetBasicImplTest, ZRem) {
   TestZRem();
+}
+
+TEST_F(ZSetBasicImplTest, ZRemN) {
+  TestZRemN();
 }
 
 TEST_F(ZSetBasicImplTest, ZMScore) {
