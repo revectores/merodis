@@ -2,6 +2,7 @@
 #define MERODIS_COMMON_H
 
 #include "gtest/gtest.h"
+
 #include "merodis/merodis.h"
 #include "testutil.h"
 

@@ -5,9 +5,11 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <utility>
 #include <optional>
 
 #include "leveldb/db.h"
+#include "leveldb/write_batch.h"
 
 namespace leveldb {
 

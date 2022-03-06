@@ -1,8 +1,10 @@
 #ifndef MERODIS_REDIS_STRING_H
 #define MERODIS_REDIS_STRING_H
 
-#include "redis.h"
+#include <cstdint>
+#include <string>
 
+#include "redis.h"
 
 namespace merodis {
 

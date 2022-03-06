@@ -1,7 +1,10 @@
 #include "redis_hash_basic_impl.h"
 
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
 
 namespace merodis {
 

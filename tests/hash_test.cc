@@ -1,4 +1,11 @@
 #include "gtest/gtest.h"
+
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+
 #include "merodis/merodis.h"
 #include "common.h"
 #include "testutil.h"

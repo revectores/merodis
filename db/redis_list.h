@@ -2,6 +2,9 @@
 #define MERODIS_REDIS_LIST_H
 
 #include <cstdint>
+#include <string>
+#include <vector>
+
 #include "redis.h"
 
 namespace merodis {

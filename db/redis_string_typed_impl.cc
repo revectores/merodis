@@ -1,8 +1,8 @@
 #include "redis_string_typed_impl.h"
 
+#include <cstdint>
 #include <string>
 
-#include "leveldb/db.h"
 #include "layout.h"
 #include "util/number.h"
 #include "util/variant_helper.h"

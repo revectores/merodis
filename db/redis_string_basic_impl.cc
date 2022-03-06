@@ -1,10 +1,9 @@
 #include "redis_string_basic_impl.h"
 
+#include <cerrno>
+#include <cstdint>
 #include <string>
-#include <limits>
 
-#include "leveldb/db.h"
-#include "layout.h"
 #include "util/number.h"
 
 namespace merodis {

@@ -1,6 +1,12 @@
 #ifndef MERODIS_REDIS_SET_BASIC_IMPL_H
 #define MERODIS_REDIS_SET_BASIC_IMPL_H
 
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+
 #include "redis_set.h"
 #include "util/coding.h"
 

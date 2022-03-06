@@ -1,6 +1,8 @@
 #include <cerrno>
+#include <cstdint>
 
 #include "gtest/gtest.h"
+
 #include "util/sequence.h"
 #include "util/number.h"
 

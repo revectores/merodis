@@ -1,7 +1,14 @@
 #ifndef MERODIS_REDIS_ZSET_BASIC_IMPL_H
 #define MERODIS_REDIS_ZSET_BASIC_IMPL_H
 
+#include <cstdint>
 #include <limits>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <utility>
+
 #include "redis_zset.h"
 #include "iterator_decorator.h"
 #include "util/coding.h"

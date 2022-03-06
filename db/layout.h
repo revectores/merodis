@@ -1,8 +1,10 @@
 #ifndef MERODIS_LAYOUT_H
 #define MERODIS_LAYOUT_H
 
+#include <cstdint>
 #include <string>
 #include <variant>
+
 #include "merodis/merodis.h"
 
 namespace merodis {

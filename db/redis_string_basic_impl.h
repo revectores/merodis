@@ -1,6 +1,9 @@
 #ifndef MERODIS_REDIS_STRING_BASIC_IMPL_H
 #define MERODIS_REDIS_STRING_BASIC_IMPL_H
 
+#include <cstdint>
+#include <string>
+
 #include "redis_string.h"
 
 

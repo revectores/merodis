@@ -1,6 +1,11 @@
 #ifndef MERODIS_REDIS_HASH_BASIC_IMPL_H
 #define MERODIS_REDIS_HASH_BASIC_IMPL_H
 
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+
 #include "redis_hash.h"
 #include "util/coding.h"
 

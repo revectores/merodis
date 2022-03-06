@@ -1,14 +1,10 @@
 #include "redis_list_array_impl.h"
 
-#include <cstdio>
-#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <memory>
 
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
 #include "util/coding.h"
 #include "util/sequence.h"
 

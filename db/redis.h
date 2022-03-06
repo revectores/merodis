@@ -1,7 +1,6 @@
 #ifndef MERODIS_REDIS_H
 #define MERODIS_REDIS_H
 
-#include "leveldb/db.h"
 #include "merodis/merodis.h"
 
 namespace merodis {
@@ -14,7 +13,7 @@ public:
   virtual Status Open(const Options& options, const std::string& db_path) noexcept;
 
 protected:
-  leveldb::DB* db_;
+  DB* db_;
 };
 
 }

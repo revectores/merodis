@@ -1,7 +1,12 @@
 #include "redis_zset_basic_impl.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <utility>
 #include <algorithm>
-#include "leveldb/write_batch.h"
 
 namespace merodis {
 

@@ -1,5 +1,10 @@
+#include <cstdint>
+#include <string>
 #include <vector>
+#include <set>
+
 #include "gtest/gtest.h"
+
 #include "merodis/merodis.h"
 #include "common.h"
 #include "testutil.h"
