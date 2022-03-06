@@ -8,7 +8,7 @@
 
 namespace merodis {
 
-static uint64_t ScoreOffset = -std::numeric_limits<int64_t>::min();
+static uint64_t ScoreOffset = std::numeric_limits<int64_t>::min();
 
 struct ZSetMetaValue {
   explicit ZSetMetaValue() noexcept: len(0) {};

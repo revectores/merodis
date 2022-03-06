@@ -123,7 +123,7 @@ Status RedisZSetBasicImpl::ZRange(const Slice& key,
   if (!smIter.Valid()) return Status::OK();
   ZSetMetaValue metaValue(smIter.value().ToString());
   int64_t size = static_cast<int64_t>(metaValue.len);
-  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t lower = std::max((int64_t)0, minRank >= 0 ? minRank : size + minRank);
   uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
   uint64_t rangeSize = upper - lower + 1;
   if (rangeSize < 0) return Status::OK();
@@ -172,7 +172,7 @@ Status RedisZSetBasicImpl::ZRangeWithScores(const Slice& key,
   if (!smIter.Valid()) return Status::OK();
   ZSetMetaValue metaValue(smIter.value().ToString());
   int64_t size = static_cast<int64_t>(metaValue.len);
-  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t lower = std::max((int64_t)0, minRank >= 0 ? minRank : size + minRank);
   uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
   uint64_t rangeSize = upper - lower + 1;
   if (rangeSize < 0) return Status::OK();
@@ -435,7 +435,7 @@ Status RedisZSetBasicImpl::ZRemRangeByRank(const Slice& key,
   if (!smIter.Valid()) return Status::OK();
   ZSetMetaValue metaValue(smIter.value().ToString());
   int64_t size = static_cast<int64_t>(metaValue.len);
-  uint64_t lower = std::max(0ll, minRank >= 0 ? minRank : size + minRank);
+  uint64_t lower = std::max((int64_t)0, minRank >= 0 ? minRank : size + minRank);
   uint64_t upper = std::min(size - 1, maxRank >= 0 ? maxRank : size + maxRank);
   uint64_t rangeSize = upper - lower + 1;
   if (rangeSize < 0) return Status::OK();
