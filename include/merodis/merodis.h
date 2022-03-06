@@ -8,10 +8,10 @@
 #include <utility>
 #include <optional>
 
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
+#include DB_H
+#include WRITE_BATCH_H
 
-namespace leveldb {
+namespace DB_ENGINE {
 
 inline bool operator<(const Slice& a, const Slice& b)  { return a.compare(b) < 0; }
 inline bool operator<=(const Slice& a, const Slice& b) { return a.compare(b) <= 0; }
@@ -24,14 +24,23 @@ inline bool operator>=(const Slice& a, const Slice& b) { return a.compare(b) >= 
 
 namespace merodis {
 
+using DB = DB_ENGINE::DB;
+using EngineOptions = DB_ENGINE::Options;
+using ReadOptions = DB_ENGINE::ReadOptions;
+using WriteOptions = DB_ENGINE::WriteOptions;
+using WriteBatch = DB_ENGINE::WriteBatch;
+using Status = DB_ENGINE::Status;
+using Slice = DB_ENGINE::Slice;
+using Iterator = DB_ENGINE::Iterator;
+
 typedef int64_t UserIndex;
 typedef std::string Member;
 typedef int64_t Score;
 typedef std::vector<Member> Members;
 typedef std::vector<Score> Scores;
 typedef std::vector<std::optional<Score>> ScoreOpts;
-typedef std::map<leveldb::Slice, Score> Member2Score;
-typedef std::pair<std::string, int64_t> ScoredMember;
+typedef std::map<Member, Score> Member2Score;
+typedef std::pair<Member, Score> ScoredMember;
 typedef std::vector<ScoredMember> ScoredMembers;
 
 enum BeforeOrAfter {
@@ -63,21 +72,13 @@ enum ZSetImpl {
   kZSetBasicImpl,
 };
 
-struct Options : public leveldb::Options {
+struct Options : public EngineOptions {
   enum StringImpl string_impl = kStringTypedImpl;
   enum ListImpl list_impl = kListArrayImpl;
   enum HashImpl hash_impl = kHashBasicImpl;
   enum SetImpl set_impl = kSetBasicImpl;
   enum ZSetImpl zset_impl = kZSetBasicImpl;
 };
-
-using DB = leveldb::DB;
-using ReadOptions = leveldb::ReadOptions;
-using WriteOptions = leveldb::WriteOptions;
-using WriteBatch = leveldb::WriteBatch;
-using Status = leveldb::Status;
-using Slice = leveldb::Slice;
-using Iterator = leveldb::Iterator;
 
 class RedisString;
 class RedisList;

@@ -3,8 +3,9 @@
 
 #include <cstdlib>
 #include <cerrno>
+#include <limits>
 
-#include "leveldb/slice.h"
+#include "merodis/merodis.h"
 
 enum class RangeError {
   kOK,
@@ -12,7 +13,7 @@ enum class RangeError {
   kUnderflow
 };
 
-inline int SliceToInt64(const leveldb::Slice& s, int64_t& n) {
+inline int SliceToInt64(const merodis::Slice& s, int64_t& n) {
   const int prevErrno = errno;
   errno = 0;
   char* ptr = nullptr;

@@ -75,7 +75,7 @@ Status Merodis::DestroyDB(const std::string& db_path, Options options) noexcept 
   Status s;
   std::string db_home(db_path + "/");
   for (const auto& db_name: databases) {
-    s = leveldb::DestroyDB(db_home + db_name, options);
+    s = DB_ENGINE::DestroyDB(db_home + db_name, options);
     if (!s.ok()) return s;
   }
   return s;

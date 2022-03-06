@@ -22,6 +22,10 @@ public:
   Slice value() const override { return iter_->value(); }
   Status status() const override { return iter_->status(); }
 
+#ifdef ROCKSDB
+  void SeekForPrev(const Slice& target) override { iter_->SeekForPrev(target); }
+#endif
+
 protected:
   Iterator* iter_;
 };

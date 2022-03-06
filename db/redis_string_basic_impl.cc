@@ -12,10 +12,6 @@ RedisStringBasicImpl::RedisStringBasicImpl() noexcept = default;
 
 RedisStringBasicImpl::~RedisStringBasicImpl() noexcept = default;
 
-Status RedisStringBasicImpl::Open(const Options& options, const std::string& db_path) noexcept {
-  return leveldb::DB::Open(options, db_path, &db_);
-}
-
 Status RedisStringBasicImpl::Get(const Slice& key,
                                  std::string* value) noexcept {
   return db_->Get(ReadOptions(), key, value);

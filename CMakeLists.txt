@@ -3,43 +3,57 @@ project(merodis)
 
 set(CMAKE_CXX_STANDARD 17)
 
-SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Build LevelDB's unit tests" FORCE)
-SET(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "Build LevelDB's benchmarks" FORCE)
+SET(ENGINE "leveldb" CACHE STRING "Database Engine")
 option(MERODIS_BUILD_TESTS "Build Merodis' unit tests" ON)
 option(MERODIS_BUILD_BENCHMARKS "Build Merodis' benchmarks" ON)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  # Disable C++ exceptions.
-  string(REGEX REPLACE "/EH[a-z]+" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs-c-")
-  add_definitions(-D_HAS_EXCEPTIONS=0)
+if(ENGINE STREQUAL "leveldb")
+  SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "Build LevelDB's unit tests" FORCE)
+  SET(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "Build LevelDB's benchmarks" FORCE)
 
-  # Disable RTTI.
-  string(REGEX REPLACE "/GR" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
-else(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  # Enable strict prototype warnings for C code in clang and gcc.
-  if(NOT CMAKE_C_FLAGS MATCHES "-Wstrict-prototypes")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
-  endif(NOT CMAKE_C_FLAGS MATCHES "-Wstrict-prototypes")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # Disable C++ exceptions.
+    string(REGEX REPLACE "/EH[a-z]+" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs-c-")
+    add_definitions(-D_HAS_EXCEPTIONS=0)
 
-  # Disable C++ exceptions.
-  string(REGEX REPLACE "-fexceptions" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+    # Disable RTTI.
+    string(REGEX REPLACE "/GR" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
+  else(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # Enable strict prototype warnings for C code in clang and gcc.
+    if(NOT CMAKE_C_FLAGS MATCHES "-Wstrict-prototypes")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstrict-prototypes")
+    endif(NOT CMAKE_C_FLAGS MATCHES "-Wstrict-prototypes")
 
-  # Disable RTTI.
-  string(REGEX REPLACE "-frtti" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
-endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # Disable C++ exceptions.
+    string(REGEX REPLACE "-fexceptions" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 
-add_subdirectory(third_party/leveldb)
+    # Disable RTTI.
+    string(REGEX REPLACE "-frtti" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+  endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+elseif(ENGINE STREQUAL "rocksdb")
+  add_compile_definitions(ROCKSDB)
+  SET(WITH_TESTS OFF CACHE BOOL "build with tests" FORCE)
+  SET(WITH_BENCHMARK_TOOLS OFF CACHE BOOL "build with benchmarks" FORCE)
+else()
+  message(FATAL_ERROR "Unsupported database engine ${ENGINE}, abort.")
+endif()
+
+add_compile_definitions(DB_ENGINE=${ENGINE})
+add_compile_definitions(DB_H="${ENGINE}/db.h")
+add_compile_definitions(WRITE_BATCH_H="${ENGINE}/write_batch.h")
+
+add_subdirectory(third_party/${ENGINE})
 
 include_directories(
-  third_party/leveldb/include
+  third_party/${ENGINE}/include
   include
   .
 )
-link_directories(third_party/leveldb)
+link_directories(third_party/${ENGINE})
 
 add_library(merodis)
 target_sources(merodis PRIVATE
@@ -74,8 +88,7 @@ target_sources(merodis PRIVATE
   util/sequence.h
   util/variant_helper.h
 )
-target_link_libraries(merodis leveldb)
-
+target_link_libraries(merodis ${ENGINE})
 
 if(MERODIS_BUILD_TESTS)
   add_subdirectory(third_party/googletest)
