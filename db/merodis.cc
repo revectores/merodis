@@ -116,7 +116,7 @@ Status Merodis::LIndex(const Slice& key, UserIndex index, std::string* value) no
 }
 
 Status Merodis::LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen,
-                     std::vector<uint64_t>& indices) noexcept {
+                     std::vector<uint64_t>* indices) noexcept {
   return list_db_->LPos(key, value, rank, count, maxlen, indices);
 }
 

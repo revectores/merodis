@@ -16,7 +16,7 @@ public:
 
   virtual Status LLen(const Slice& key, uint64_t* len) noexcept = 0;
   virtual Status LIndex(const Slice& key, UserIndex index, std::string* value) noexcept = 0;
-  virtual Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept = 0;
+  virtual Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>* indices) noexcept = 0;
   virtual Status LRange(const Slice& key, UserIndex from, UserIndex to, std::vector<std::string>* values) noexcept = 0;
   virtual Status LSet(const Slice& key, UserIndex index, const Slice& value) noexcept = 0;
   virtual Status Push(const Slice& key, const Slice& value, bool createListIfNotFound, enum Side side) noexcept = 0;

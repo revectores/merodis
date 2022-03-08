@@ -92,7 +92,7 @@ Status RedisListArrayImpl::LPos(const Slice& key,
                                 int64_t rank,
                                 int64_t count,
                                 int64_t maxlen,
-                                std::vector<uint64_t>& indices) noexcept {
+                                std::vector<uint64_t>* indices) noexcept {
   std::string rawListMetaValue;
   Status s = db_->Get(ReadOptions(), key, &rawListMetaValue);
   if (!s.ok()) return s;
@@ -101,7 +101,7 @@ Status RedisListArrayImpl::LPos(const Slice& key,
   Iterator* iter = db_->NewIterator(ReadOptions());
   uint64_t current;
   uint64_t currentCount = 0;
-  indices.reserve(indices.size() + count);
+  indices->reserve(indices->size() + count);
   if (rank >= 0) {
     current = metaValue.leftIndex;
     ListNodeKey firstKey(key, current);
@@ -111,7 +111,7 @@ Status RedisListArrayImpl::LPos(const Slice& key,
          iter->Next(), current++) {
       if (iter->value().ToString() == value) {
         if (currentRank >= rank) {
-          indices.push_back(current - metaValue.leftIndex);
+          indices->push_back(current - metaValue.leftIndex);
           currentCount += 1;
           if (count && currentCount == count) break;
         }
@@ -127,7 +127,7 @@ Status RedisListArrayImpl::LPos(const Slice& key,
          iter->Prev(), current--) {
       if (iter->value().ToString() == value) {
         if (currentRank <= rank) {
-          indices.push_back(current - metaValue.leftIndex);
+          indices->push_back(current - metaValue.leftIndex);
           currentCount += 1;
           if (count && currentCount == count) break;
         }

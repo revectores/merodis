@@ -27,7 +27,7 @@ public:
   }
   std::vector<uint64_t> LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen) {
     std::vector<uint64_t> indices;
-    EXPECT_MERODIS_OK(db.LPos(key, value, rank, count, maxlen, indices));
+    EXPECT_MERODIS_OK(db.LPos(key, value, rank, count, maxlen, &indices));
     return indices;
   }
   std::vector<std::string> LRange(const Slice& key, UserIndex from, UserIndex to) {

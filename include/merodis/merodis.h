@@ -105,7 +105,7 @@ public:
   // List Operators
   Status LLen(const Slice& key, uint64_t* len) noexcept;
   Status LIndex(const Slice& key, UserIndex index, std::string* value) noexcept;
-  Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>& indices) noexcept;
+  Status LPos(const Slice& key, const Slice& value, int64_t rank, int64_t count, int64_t maxlen, std::vector<uint64_t>* indices) noexcept;
   Status LRange(const Slice& key, UserIndex from, UserIndex to, std::vector<std::string>* values) noexcept;
   Status LSet(const Slice& key, UserIndex index, const Slice& value) noexcept;
   Status LPush(const Slice& key, const Slice& value) noexcept;
