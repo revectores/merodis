@@ -4,6 +4,13 @@
 #include <vector>
 #include <random>
 
+inline uint64_t rand_uint64() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<std::mt19937::result_type> dist;
+  return dist(gen);
+}
+
 inline uint64_t rand_uint64(uint64_t lower, uint64_t upper) {
   std::random_device rd;
   std::mt19937 gen(rd());

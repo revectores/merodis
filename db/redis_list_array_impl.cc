@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <memory>
 
+#include <iostream>
+
 #include "util/coding.h"
 #include "util/sequence.h"
 
@@ -363,6 +365,7 @@ Status RedisListArrayImpl::LRem(const Slice& key,
   iter->SeekToFirst();
   iter->Seek(firstKey.Encode());
   for (Block block: blocks) {
+//    std::cout << block.start << " " << block.end << " " << block.end - block.start << " " << block.step << std::endl;
     current = block.start;
     if (block.step == 0) continue;
     for (iter->Seek(ListNodeKey(key, current).Encode());

@@ -14,8 +14,16 @@ namespace merodis {
 
 RedisSetBasicImpl::RedisSetBasicImpl() noexcept = default;
 
+//RedisSetBasicImpl::RedisSetBasicImpl(bool MemoryMeta) noexcept: MemoryMeta(MemoryMeta), len(0) {}
+//
 RedisSetBasicImpl::~RedisSetBasicImpl() noexcept = default;
-
+//
+//Status RedisSetBasicImpl::Open(const Options& options, const std::string& db_path) noexcept {
+//  Status s = Redis::Open(options, db_path);
+//  if(!s.ok()) return s;
+//  ReloadLens();
+//}
+//
 Status RedisSetBasicImpl::Del(const Slice& key) {
   Iterator* iter = db_->NewIterator(ReadOptions());
   iter->Seek(key);
@@ -548,4 +556,16 @@ bool RedisSetBasicImpl::IsMemberKey(const Slice& iterKey, uint64_t keySize) {
   return iterKey.size() > keySize && iterKey[keySize] == 0;
 }
 
+//void RedisSetBasicImpl::ReloadLens() {
+//  Iterator* iter = db_->NewIterator(ReadOptions());
+//  lens.clear();
+//  for (; iter->Valid(); iter->Next()) {
+//    const char *c = iter->key().data();
+//    for (; *c; c++);
+//    size_t keySize = c - iter->key().data();
+//    Slice key(iter->key().data(), keySize);
+//    if (keySize < iter->key().size()) lens[key.ToString()] += 1;
+//  }
+//}
+//
 }

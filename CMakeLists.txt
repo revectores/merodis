@@ -114,6 +114,16 @@ if(MERODIS_BUILD_BENCHMARKS)
   add_executable(merodis_benchmark)
   target_sources(merodis_benchmark PRIVATE
     benchmark/bench.cc
+    benchmark/db_fixture.cc
+    benchmark/db_fixture.h
+    benchmark/bench_util.cc
+    benchmark/bench_util.h
+    benchmark/util_bench.cc
+    benchmark/string_bench.cc
+    benchmark/list_bench.cc
+    benchmark/hash_bench.cc
+    benchmark/set_bench.cc
+    benchmark/zset_bench.cc
   )
   target_link_directories(merodis_benchmark PRIVATE third_party/benchmark)
   target_link_libraries(merodis_benchmark merodis benchmark)

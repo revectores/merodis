@@ -75,7 +75,9 @@ private:
 class RedisSetBasicImpl final : public RedisSet {
 public:
   RedisSetBasicImpl() noexcept;
+//  explicit RedisSetBasicImpl(bool MemoryMeta) noexcept;
   ~RedisSetBasicImpl() noexcept final;
+//  Status Open(const Options& options, const std::string& db_path) noexcept override;
 
   Status Del(const Slice& key);
 
@@ -103,6 +105,9 @@ private:
   Slice GetMember(Iterator* iter, uint64_t keySize);
   uint64_t CountKeyIntersection(const Slice& key, const SetNodeKey& nodeKey);
   static bool IsMemberKey(const Slice& iterKey, uint64_t keySize);
+//  void ReloadLens();
+//  bool MemoryMeta;
+//  std::map<std::string, uint64_t> lens;
 };
 
 }

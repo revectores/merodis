@@ -78,6 +78,7 @@ struct Options : public EngineOptions {
   enum HashImpl hash_impl = kHashBasicImpl;
   enum SetImpl set_impl = kSetBasicImpl;
   enum ZSetImpl zset_impl = kZSetBasicImpl;
+  bool set_memory_meta = false;
 };
 
 class RedisString;
